@@ -1,32 +1,7 @@
-import { User, type IUser } from "../models/user.model";
 import { hashPassword, comparePassword } from "../utils/bcryptpassword";
 
 const register = async (req: Request): Promise<Response> => {
     try {
-        const { username, password, email, phone } = await req.json() as IUser;
-        if(!username || !password || !email || !phone) {
-            return new Response('Missing required fields', { status: 400 });
-        }
-
-        const existingEmail = await User.findOne({ email });
-        if (existingEmail) {
-            return new Response('Email already in use', { status: 400 });
-        }
-
-        const existingPhone = await User.findOne({ phone });
-        if (existingPhone) {
-            return new Response('Phone number already in use', { status: 400 });
-        }
-
-        const hashedPassword = await hashPassword(password);
-
-        const newUser = new User({
-            username,
-            email,
-            phone,
-            password: hashedPassword,
-            isVerified: false,
-        });
         return new Response('Register successful', { status: 200 });
     } catch (error) {
         return new Response('Register failed', { status: 500 });
