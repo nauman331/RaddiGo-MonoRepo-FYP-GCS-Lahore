@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import { verifyToken } from '../utils/jwttoken';
 
 export interface AuthRequest extends Request {
   user?: any;
@@ -13,7 +13,7 @@ const authMiddleware = (req: Request): { authorized: boolean; user?: any; error?
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY || "default_secret");
+    const decoded = verifyToken(token);
     return { authorized: true, user: decoded };
   } catch (err) {
     return { authorized: false, error: 'Invalid token' };

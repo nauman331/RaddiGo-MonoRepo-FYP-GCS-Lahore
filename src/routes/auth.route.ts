@@ -1,4 +1,5 @@
 import * as AuthController from '../controllers/auth.controller';
+import { authMiddleware } from '../middlewares/auth.middleware';
 
 export const AuthRoutes = {
     '/api/v1/login': {
@@ -7,7 +8,20 @@ export const AuthRoutes = {
     '/api/v1/register': {
         POST: async (req: Request) => await AuthController.register(req),
     },
-    '/api/v1/logout': {
-        POST: async (req: Request) => await AuthController.logout(req),
+    '/api/v1/verify-email': {
+        POST: async (req: Request) => await AuthController.verifyEmail(req),
+    },
+    '/api/v1/resend-verification-email': {
+        POST: async (req: Request) => await AuthController.resendVerificationEmail(req),
+    },
+    '/api/v1/me': {
+        GET: async (req: Request) => {
+            const authResult = authMiddleware(req);
+            if (!authResult.authorized) {
+                return new Response(authResult.error || 'Unauthorized', { status: 401 });
+            }
+            (req as any).user = authResult.user;
+            return await AuthController.getMe(req);
+        },
     },
 }
