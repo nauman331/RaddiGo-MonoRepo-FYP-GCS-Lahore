@@ -1,27 +1,25 @@
 import { AuthRoutes } from "./src/routes/auth.route";
 import { connectDB } from "./src/config/db";
+import { chatController } from "./src/socketControllers/chat.controller";
 
 await connectDB();
+const chat = chatController()
 const server = Bun.serve({
   port: Number(process.env.PORT),
   routes: {
     ...AuthRoutes,
   },
   fetch(req) {
+    if (server.upgrade(req)) {
+      return;
+    }
     return new Response("Unmatched route", { status: 404 });
   },
   websocket: {
-    open(ws) {
-      console.log("WebSocket connection opened");
-    },
-    message(ws, message) {
-      console.log("Received message:", message);
-      ws.send(`Echo: ${message}`);
-    },
-    close(ws, code, reason) {
-      console.log(`WebSocket connection closed: ${code} - ${reason}`);
-    },
-  }
+    open: chat.open,
+    message: chat.message,
+    close: chat.close,
+  },
 });
 
 console.log(`Listening on ${server.url}`);

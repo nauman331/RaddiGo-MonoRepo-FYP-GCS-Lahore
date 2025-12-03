@@ -120,4 +120,16 @@ const getMe = async (req: Request): Promise<Response> => {
         return new Response('Failed to fetch user data', { status: 500 });
     }
 }
-export { register,login, verifyEmail, resendVerificationEmail, getMe };
+const deleteMe = async (req: Request): Promise<Response> => {
+    try {
+        const user = (req as any).user;
+        if (!user) {
+            return new Response('Unauthorized', { status: 401 });
+        }
+        await User.findByIdAndDelete(user.userId);
+        return new Response('User deleted successfully', { status: 200 });
+    } catch (error) {
+        return new Response('Failed to delete user', { status: 500 });
+    }
+}
+export { register,login, verifyEmail, resendVerificationEmail, getMe, deleteMe };

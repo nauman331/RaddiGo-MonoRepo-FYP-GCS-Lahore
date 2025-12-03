@@ -24,4 +24,14 @@ export const AuthRoutes = {
             return await AuthController.getMe(req);
         },
     },
-}
+    '/api/v1/me/delete': {
+        DELETE: async (req:Request) => {
+            const authResult = authMiddleware(req);
+            if (!authResult.authorized) {
+                return new Response(authResult.error || 'Unauthorized', { status: 401 });
+            }
+            (req as any).user = authResult.user;
+            return await AuthController.deleteMe(req);
+        },
+    },
+};
