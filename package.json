@@ -1,5 +1,7 @@
 {
-  "name": "server",
+  "name": "raddigo-server",
+  "version": "1.0.0",
+  "description": "RaddiGo Backend Server - Connecting households with scrap collectors",
   "module": "index.ts",
   "type": "module",
   "private": true,
@@ -7,6 +9,15 @@
     "start": "bun run index.ts",
     "dev": "bun --watch run index.ts"
   },
+  "keywords": [
+    "raddigo",
+    "scrap-collection",
+    "pakistan",
+    "raddi-wala",
+    "marketplace"
+  ],
+  "author": "Nauman",
+  "license": "MIT",
   "devDependencies": {
     "@types/bun": "latest"
   },
