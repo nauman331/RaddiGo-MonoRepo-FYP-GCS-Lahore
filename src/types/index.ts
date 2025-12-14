@@ -35,3 +35,10 @@ export interface ICategory {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export interface DriverLocation {
+  driverId: number;
+  socketId: string;
+  longitude: number;
+  latitude: number;
+}
