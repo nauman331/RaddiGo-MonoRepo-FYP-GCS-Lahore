@@ -4,7 +4,7 @@ export interface IUser {
   email: string;
   password: string;
   phone: string;
-  role: "user" | "admin";
+  role: 'customer' | 'admin' | 'support' | 'collector';
   isVerified: boolean;
   otp?: string;
   otpExpiry?: Date;
