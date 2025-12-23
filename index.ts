@@ -4,8 +4,11 @@ import { connectDB } from "./src/config/sqldb";
 import { connectRedis } from "./src/config/redis";
 import { initializeSocket } from "./src/config/socket";
 import { setupAllSocketControllers } from "./src/socketControllers/index";
+import { runMigrations } from "./src/mysqlMigrations/index.migration";
+
 await connectDB();
 await connectRedis();
+console.log("Database migrations completed");
 const server = Bun.serve({
   port: Number(process.env.PORT),
   routes: {

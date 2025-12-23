@@ -1,5 +1,16 @@
 import { SQL } from "bun";
 import { runMigrations } from "../mysqlMigrations/index.migration";
+
+// Create a connection without database to create the database first
+const mysqlWithoutDB = new SQL({
+  adapter: "mysql",
+  hostname: process.env.DB_HOST,
+  port: Number(process.env.DB_PORT),
+  username: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  ssl: process.env.DB_SSL_MODE === "REQUIRED" ? { rejectUnauthorized: true } : undefined,
+});
+
 const mysql = new SQL({
   adapter: "mysql",
   hostname: process.env.DB_HOST,
@@ -12,6 +23,12 @@ const mysql = new SQL({
 
 export async function connectDB() {
   try {
+    // First connect without database and create it
+    await mysqlWithoutDB.connect();
+    await mysqlWithoutDB`CREATE DATABASE IF NOT EXISTS ${mysqlWithoutDB.unsafe(process.env.DB_NAME || 'raddigo')}`;
+    await mysqlWithoutDB.close();
+
+    // Now connect to the database
     await mysql.connect();
     console.log("MySQL database connected successfully");
     await runMigrations();
