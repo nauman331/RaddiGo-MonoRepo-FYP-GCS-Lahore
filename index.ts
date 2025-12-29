@@ -1,10 +1,11 @@
 import { AuthRoutes } from "./src/routes/auth.route";
 import { CategoryRoutes } from "./src/routes/category.route";
+import { adminServiceRoutes } from "./src/routes/adminservice.route"
 import { connectDB } from "./src/config/sqldb";
 import { connectRedis } from "./src/config/redis";
 import { initializeSocket } from "./src/config/socket";
 import { setupAllSocketControllers } from "./src/socketControllers/index";
-import { runMigrations } from "./src/mysqlMigrations/index.migration";
+
 
 await connectDB();
 await connectRedis();
@@ -14,6 +15,7 @@ const server = Bun.serve({
   routes: {
     ...AuthRoutes,
     ...CategoryRoutes,
+    ...adminServiceRoutes,
   },
 });
 
