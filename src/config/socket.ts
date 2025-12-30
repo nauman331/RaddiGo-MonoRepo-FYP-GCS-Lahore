@@ -2,8 +2,8 @@ import { Server } from "socket.io";
 
 let io: Server | null = null;
 
-export const initializeSocket = (port: number) => {
-    io = new Server(port, {
+export const initializeSocket = (server: any) => {
+    io = new Server(server, {
         cors: {
             origin: process.env.CORS_ORIGIN || "*",
             methods: ["GET", "POST"]
@@ -19,7 +19,7 @@ export const initializeSocket = (port: number) => {
         connectTimeout: 45000,
     });
 
-    console.log(`Socket.IO running on port ${port}`);
+    console.log(`Socket.IO initialized on same server`);
     return io;
 };
 

@@ -19,7 +19,7 @@ const server = Bun.serve({
   },
 });
 
-initializeSocket(Number(process.env.SOCKET_PORT));
+initializeSocket(server);
 
 setupAllSocketControllers();
 
