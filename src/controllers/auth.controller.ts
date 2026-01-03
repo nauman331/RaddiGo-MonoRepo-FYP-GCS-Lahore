@@ -152,7 +152,15 @@ const getMe = async (req: Request): Promise<Response> => {
 
         const cachedUser = await redis.get(`user:${user.userId}`);
         if (cachedUser) {
-            return Response.json({ user: cachedUser }, { status: 200 });
+            let userObj: any = cachedUser;
+            if (typeof cachedUser === 'string') {
+                try {
+                    userObj = JSON.parse(cachedUser);
+                } catch (e) {
+                    userObj = cachedUser;
+                }
+            }
+            return Response.json({ user: userObj }, { status: 200 });
         }
 
         const [userData] = await mysql<IUser[]>`
