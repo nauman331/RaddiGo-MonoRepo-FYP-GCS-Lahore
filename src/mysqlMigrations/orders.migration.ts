@@ -5,7 +5,7 @@ export async function ordersMigration() {
     CREATE TABLE IF NOT EXISTS orders (
       id INT AUTO_INCREMENT PRIMARY KEY,
       customerId INT NOT NULL,
-      collectorId INT NOT NULL,
+      collectorId INT DEFAULT NULL,
       status ENUM('pending', 'accepted', 'arrived', 'completed', 'cancelled') DEFAULT 'pending',
       pickupLatitude DECIMAL(10, 8) NOT NULL,
       pickupLongitude DECIMAL(11, 8) NOT NULL,

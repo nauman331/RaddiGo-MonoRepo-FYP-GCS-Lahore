@@ -35,8 +35,8 @@ export const setupRidesController = () => {
         try {
             const data = message.data;
             const socketId = message._socketId;
-
-            if (!data?.pickupLatitude || !data.pickupLongitude) {
+            const scheduleTime = new Date();
+            if (data.pickupLatitude === undefined || data.pickupLongitude === undefined) {
                 return sendToSocket(socketId, "error", { message: "Invalid order data" });
             }
 
@@ -45,9 +45,14 @@ export const setupRidesController = () => {
                 data.pickupLongitude,
                 parseInt(process.env.RADIUS_KM || "5")
             );
-
-            if (nearbyDrivers?.length) {
-                console.log(`Found ${nearbyDrivers.length} nearby drivers for new order.`);
+            if (nearbyDrivers?.length > 0) {
+                await mysql`
+                INSERT INTO orders (customerId, pickupLatitude, pickupLongitude,
+                status, pickupAddress, scheduleTime, approximateRaddiInKg)
+                VALUES (${data.customerId}, 'null', ${data.pickupLatitude}, 
+                ${data.pickupLongitude}, 'pending', ${data.pickupAddress}, 
+                ${scheduleTime}, ${data.approximateRaddiInKg}   )
+            `;
                 nearbyDrivers.forEach((driver: any) => sendToRoom(driver.driverId, "newRideOrder", data));
                 sendToSocket(socketId, "orderCreated", { success: true, driverCount: nearbyDrivers.length });
             } else {
@@ -63,8 +68,6 @@ export const setupRidesController = () => {
         try {
             const data = message.data;
             const socketId = message._socketId;
-
-            console.log("Received acceptRaddiOrder event with data:", data);
 
             if (!data?.customerId || !data.collectorId) {
                 console.log("Missing customer or collector id. Data:", JSON.stringify(data, null, 2));
@@ -87,9 +90,6 @@ export const setupRidesController = () => {
                 ${data.pickupLongitude}, 'accepted', ${data.pickupAddress}, ${data.scheduleTime}, 
                 ${data.approximateRaddiInKg})
             `;
-
-            console.log(`Order accepted - CollectorID: ${collectorIdNum}, CustomerID: ${customerIdNum}`);
-            console.log("Order details:", JSON.stringify(data, null, 2));
 
             sendToRoom(String(customerIdNum), "rideOrderAccepted", { collectorId: collectorIdNum, orderDetails: data });
             sendToSocket(socketId, "orderAccepted", { success: true });
