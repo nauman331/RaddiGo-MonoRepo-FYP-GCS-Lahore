@@ -1,4 +1,4 @@
-import mysql from "../sqldb";
+import mysql from "../../packages/config/sqldb";
 
 export async function userMigration() {
   await mysql`

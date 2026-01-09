@@ -1,8 +1,10 @@
 {
   "name": "auth-service",
-  "scripts": { "dev": "bun index.ts" },
   "dependencies": {
     "@raddi/config": "workspace:*",
     "@raddi/types": "workspace:*"
+  },
+  "scripts": {
+    "dev": "bun --watch index.ts"
   }
 }

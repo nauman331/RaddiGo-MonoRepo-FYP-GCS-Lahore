@@ -1,5 +1,9 @@
 {
   "name": "gateway",
-  "scripts": { "dev": "bun index.ts" },
-  "dependencies": { "@raddi/config": "workspace:*" }
+  "scripts": {
+    "dev": "bun --watch index.ts"
+  },
+  "dependencies": {
+    "@raddi/config": "workspace:*"
+  }
 }

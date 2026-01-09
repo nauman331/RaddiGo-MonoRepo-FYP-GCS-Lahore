@@ -1,5 +1,5 @@
-import { sendPushNotificationToAllUsers } from "../services/sendPushNotification";
-import { authMiddleware, rolesMiddleware } from "../middlewares/auth.middleware";
+import { sendPushNotificationToAllUsers } from "../../ThirdPartyservices/sendPushNotification";
+import { authMiddleware, rolesMiddleware } from "../../auth-service/auth.middleware";
 
 export const adminServiceRoutes = {
     '/api/v1/admin/send-notification': {

@@ -1,4 +1,4 @@
-import mysql from '../config/sqldb';
+import mysql from './sqldb';
 import { verifyToken } from '../utils/jwttoken';
 
 export interface AuthRequest extends Request {

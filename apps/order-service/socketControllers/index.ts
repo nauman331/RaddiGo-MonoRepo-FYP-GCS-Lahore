@@ -1,4 +1,4 @@
-import { setupRidesController } from "./rides.controller";
+import { setupRidesController } from "../rides.controller";
 import { setupChatController } from "./chat.controller";
 import { setupNotificationController } from "./notification.controller";
 

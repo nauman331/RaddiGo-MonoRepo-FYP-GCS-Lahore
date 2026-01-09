@@ -1,6 +1,6 @@
-import { sendEmail } from "../services/mailsender";
-import { getWelcomeEmailTemplate } from "../emailtemplates/welcomeTemplate";
-import { getPasswordResetEmailTemplate } from "../emailtemplates/passwordResettemplate";
+import { sendEmail } from "../ThirdPartyservices/mailsender";
+import { getWelcomeEmailTemplate } from "./emailtemplates/welcomeTemplate";
+import { getPasswordResetEmailTemplate } from "./emailtemplates/passwordResettemplate";
 
 export const sendWelcomeEmail = async (to: string, name: string): Promise<void> => {
     const subject = "Welcome to TrustFarokht!";

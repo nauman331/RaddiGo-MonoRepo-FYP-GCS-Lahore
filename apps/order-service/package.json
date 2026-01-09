@@ -1,7 +1,9 @@
 {
-    "name": "order-service",
-    "scripts": { "dev": "bun index.ts" },
-"dependencies": {
+  "name": "order-service",
+  "scripts": {
+    "dev": "bun --watch index.ts"
+  },
+  "dependencies": {
     "@raddi/config": "workspace:*",
     "@raddi/types": "workspace:*"
   }

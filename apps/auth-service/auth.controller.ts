@@ -1,8 +1,8 @@
-import mysql from "../config/sqldb";
-import type { IUser } from "../types";
+import mysql from "./sqldb";
+import type { IUser } from "../../packages/types/index";
 import { sendPasswordResetEmail } from "../utils/mailsender";
 import { signToken } from "../utils/jwttoken";
-import redis from "../config/redis";
+import redis from "./redis";
 
 const generateOTP = (): string => {
     return Math.floor(100000 + Math.random() * 900000).toString();

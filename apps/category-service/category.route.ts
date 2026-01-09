@@ -1,5 +1,5 @@
-import * as CategoryController from '../controllers/category.controller';
-import { authMiddleware, rolesMiddleware } from '../middlewares/auth.middleware';
+import * as CategoryController from './category.controller';
+import { authMiddleware, rolesMiddleware } from '../auth-service/auth.middleware';
 
 export const CategoryRoutes = {
     '/api/v1/category': {

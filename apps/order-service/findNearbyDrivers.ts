@@ -1,4 +1,4 @@
-import redis from "../config/redis";
+import redis from "./redis";
 
 export async function NearbyDrivers(latitude: number, longitude: number, radiusInKm: number) {
     const earthRadiusInKm = 6371;

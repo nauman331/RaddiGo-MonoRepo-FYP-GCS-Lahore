@@ -1,0 +1,10 @@
+{
+    "name": "category-service",
+    "scripts": {
+        "dev": "bun --watch index.ts"
+    },
+    "dependencies": {
+        "@raddi/config": "workspace:*",
+        "@raddi/types": "workspace:*"
+    }
+}

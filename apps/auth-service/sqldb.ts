@@ -1,5 +1,5 @@
 import { SQL } from "bun";
-import { runMigrations } from "./mysqlMigrations/index.migration";
+import { runMigrations } from "../../packages/config/mysqlMigrations/index.migration";
 
 // Create a connection without database to create the database first
 const mysqlWithoutDB = new SQL({

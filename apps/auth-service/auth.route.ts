@@ -1,5 +1,5 @@
-import * as AuthController from '../controllers/auth.controller';
-import { authMiddleware } from '../middlewares/auth.middleware';
+import * as AuthController from './auth.controller';
+import { authMiddleware } from './auth.middleware';
 
 export const AuthRoutes = {
     '/api/v1/login': {

@@ -1,4 +1,4 @@
-import mysql from "../sqldb";
+import mysql from "../../../apps/auth-service/sqldb";
 
 export async function chatsMigration() {
   await mysql`

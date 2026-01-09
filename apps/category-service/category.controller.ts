@@ -1,6 +1,6 @@
-import mysql from "../config/sqldb";
-import type { ICategory } from "../types";
-import redis from "../config/redis";
+import mysql from "./sqldb";
+import type { ICategory } from "../../packages/types/index";
+import redis from "./redis";
 
 export const createCategory = async (req: Request) => {
     try {

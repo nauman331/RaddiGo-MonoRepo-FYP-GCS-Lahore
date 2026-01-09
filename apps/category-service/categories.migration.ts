@@ -1,4 +1,4 @@
-import mysql from "../sqldb";
+import mysql from "../auth-service/sqldb";
 
 export async function categoriesMigration() {
   await mysql`
