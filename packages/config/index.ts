@@ -8,12 +8,13 @@ export const PORTS = {
 };
 
 export const DB_CONFIG = {
-    HOST: process.env.DB_HOST,
+    HOST: String(process.env.DB_HOST),
     PORT: Number(process.env.DB_PORT),
-    USER: process.env.DB_USER,
-    PASSWORD: process.env.DB_PASSWORD,
-    NAME: process.env.DB_NAME,
-    SSL_MODE: process.env.DB_SSL_MODE
+    USER: String(process.env.DB_USER),
+    PASSWORD: String(process.env.DB_PASSWORD),
+    NAME: String(process.env.DB_NAME),
+    SSL_MODE: String(process.env.DB_SSL_MODE),
+    REDIS_URL: String(process.env.REDIS_URL)
 };
 
 export const API_URL = `http://localhost:${PORTS.GATEWAY}`;

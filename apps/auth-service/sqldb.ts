@@ -1,5 +1,5 @@
 import { SQL } from "bun";
-import { runMigrations } from "../../packages/config/mysqlMigrations/index.migration";
+import { userMigration } from "./user.migration";
 import { DB_CONFIG } from "@raddi/config";
 // Create a connection without database to create the database first
 const mysqlWithoutDB = new SQL({
@@ -7,7 +7,7 @@ const mysqlWithoutDB = new SQL({
   hostname: DB_CONFIG.HOST,
   port: DB_CONFIG.PORT,
   username: DB_CONFIG.USER,
-  password: String(DB_CONFIG.PASSWORD),
+  password: DB_CONFIG.PASSWORD,
   ssl: DB_CONFIG.SSL_MODE === "REQUIRED" ? { rejectUnauthorized: true } : undefined,
 });
 
@@ -17,7 +17,7 @@ const mysql = new SQL({
   port: DB_CONFIG.PORT,
   database: DB_CONFIG.NAME,
   username: DB_CONFIG.USER,
-  password: String(DB_CONFIG.PASSWORD),
+  password: DB_CONFIG.PASSWORD,
   ssl: DB_CONFIG.SSL_MODE === "REQUIRED" ? { rejectUnauthorized: true } : undefined,
 });
 
@@ -31,7 +31,7 @@ export async function connectDB() {
     // Now connect to the database
     await mysql.connect();
     console.log("MySQL database connected successfully");
-    await runMigrations();
+    // await userMigration();
   } catch (error) {
     console.error("Database connection failed:", error);
     throw error;

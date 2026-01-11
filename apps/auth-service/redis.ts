@@ -8,7 +8,6 @@ export const connectRedis = async () => {
   try {
     await redis.connect();
     console.log('Redis connected:', redis.connected);
-    console.log('Connected to:', redisUrl);
   } catch (error) {
     console.error('Redis connection failed:', error);
     throw error;
