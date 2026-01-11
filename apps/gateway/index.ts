@@ -38,7 +38,7 @@ async function proxyRequest(port: number, req: Request) {
 }
 
 const server = Bun.serve({
-    port: PORTS.GATEWAY ?? 8080,
+    port: PORTS.GATEWAY,
     fetch: async (req: Request) => {
         const url = new URL(req.url);
 
