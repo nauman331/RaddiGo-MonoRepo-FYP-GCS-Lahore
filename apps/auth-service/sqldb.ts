@@ -7,7 +7,7 @@ const mysqlWithoutDB = new SQL({
   hostname: DB_CONFIG.HOST,
   port: DB_CONFIG.PORT,
   username: DB_CONFIG.USER,
-  password: DB_CONFIG.USER,
+  password: String(DB_CONFIG.PASSWORD),
   ssl: DB_CONFIG.SSL_MODE === "REQUIRED" ? { rejectUnauthorized: true } : undefined,
 });
 
@@ -17,7 +17,7 @@ const mysql = new SQL({
   port: DB_CONFIG.PORT,
   database: DB_CONFIG.NAME,
   username: DB_CONFIG.USER,
-  password: DB_CONFIG.PASSWORD,
+  password: String(DB_CONFIG.PASSWORD),
   ssl: DB_CONFIG.SSL_MODE === "REQUIRED" ? { rejectUnauthorized: true } : undefined,
 });
 

@@ -8,12 +8,12 @@ export const PORTS = {
 };
 
 export const DB_CONFIG = {
-    HOST: process.env.DB_HOST || 'localhost',
-    PORT: Number(process.env.DB_PORT) || 3306,
-    USER: process.env.DB_USER || 'root',
-    PASSWORD: process.env.DB_PASSWORD || '',
-    NAME: process.env.DB_NAME || 'raddigo',
-    SSL_MODE: process.env.DB_SSL_MODE || 'DISABLED'
+    HOST: process.env.DB_HOST,
+    PORT: Number(process.env.DB_PORT),
+    USER: process.env.DB_USER,
+    PASSWORD: process.env.DB_PASSWORD,
+    NAME: process.env.DB_NAME,
+    SSL_MODE: process.env.DB_SSL_MODE
 };
 
 export const API_URL = `http://localhost:${PORTS.GATEWAY}`;
