@@ -14,7 +14,7 @@ function findService(pathname: string): Service | undefined {
 
 async function proxyRequest(port: number, req: Request) {
     const url = new URL(req.url);
-    const target = new URL(url.pathname + url.search, `http://127.0.0.1:${port}`);
+    const target = new URL(url.pathname + url.search, `http://localhost:${port}`);
 
     const headers = new Headers(req.headers);
     headers.delete('host');
