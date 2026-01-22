@@ -6,7 +6,8 @@
     "packages/*"
   ],
   "scripts": {
-    "dev:backend": "bun --filter './apps/*-service' dev & bun --filter gateway dev"
+    "dev:backend": "bun --filter './apps/*-service' dev & bun --filter gateway dev",
+    "start": "bun --filter './apps/*-service' dev & bun --filter gateway dev"
   },
   "dependencies": {
     "firebase-admin": "^13.6.0",
