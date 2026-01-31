@@ -12,4 +12,4 @@ const server = Bun.serve({
         ...CategoryRoutes
     }
 })
-console.log(`Category service running on port ${server.url}`);
+console.log(`Category service running on ${server.hostname}:${server.port}`);

@@ -11,4 +11,4 @@ const server = Bun.serve({
         ...AuthRoutes
     }
 })
-console.log(`Auth service running on port ${server.url}`);
+console.log(`Auth service running on ${server.hostname}:${server.port}`);

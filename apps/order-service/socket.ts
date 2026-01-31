@@ -11,14 +11,14 @@ const rooms = new Map<string, Set<string>>();
 
 export const getWebSocketConfig = () => ({
     open(ws: ServerWebSocket<WebSocketData>) {
-        const data = ws.data as WebSocketData;
+        const data = ws.data;
         connections.set(data.id, ws);
         broadcast("connection", { socketId: data.id });
     },
     message(ws: ServerWebSocket<WebSocketData>, message: string | Buffer) {
         try {
             const data = typeof message === 'string' ? JSON.parse(message) : message;
-            const wsData = ws.data as WebSocketData;
+            const wsData = ws.data;
 
             // Add socket metadata
             const enrichedData = {
@@ -35,7 +35,7 @@ export const getWebSocketConfig = () => ({
         }
     },
     close(ws: ServerWebSocket<WebSocketData>) {
-        const data = ws.data as WebSocketData;
+        const data = ws.data;
         console.log(`Client disconnected: ${data.id}`);
 
         // Remove from all rooms
@@ -61,7 +61,7 @@ export const on = (event: string, handler: (data: any) => void) => {
     if (!eventHandlers.has(event)) {
         eventHandlers.set(event, new Set());
     }
-    eventHandlers.get(event)!.add(handler);
+    eventHandlers.get(event).add(handler);
 };
 
 const broadcast = (event: string, data: any) => {
@@ -75,13 +75,13 @@ const broadcast = (event: string, data: any) => {
 export const joinRoom = (socketId: string, room: string) => {
     const ws = connections.get(socketId);
     if (ws) {
-        const data = ws.data as WebSocketData;
+        const data = ws.data;
         data.rooms.add(room);
 
         if (!rooms.has(room)) {
             rooms.set(room, new Set());
         }
-        rooms.get(room)!.add(socketId);
+        rooms.get(room).add(socketId);
     }
 };
 
@@ -89,7 +89,7 @@ export const joinRoom = (socketId: string, room: string) => {
 export const leaveRoom = (socketId: string, room: string) => {
     const ws = connections.get(socketId);
     if (ws) {
-        const data = ws.data as WebSocketData;
+        const data = ws.data;
         data.rooms.delete(room);
 
         const roomSet = rooms.get(room);

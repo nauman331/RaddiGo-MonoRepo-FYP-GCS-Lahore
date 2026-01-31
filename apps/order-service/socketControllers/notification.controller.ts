@@ -1,4 +1,4 @@
-import { on, joinRoom, leaveRoom, sendToSocket, sendToRoom } from "../config/socket";
+import { on, joinRoom, leaveRoom, sendToSocket, sendToRoom } from "../socket";
 
 export const setupNotificationController = () => {
     on("connection", (data) => {

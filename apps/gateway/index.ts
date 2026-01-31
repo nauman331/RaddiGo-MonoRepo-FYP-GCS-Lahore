@@ -47,7 +47,7 @@ const server = Bun.serve({
         }
 
         const svc = findService(url.pathname);
-        if (!svc || !svc.port) return new Response('Not Found', { status: 404 });
+        if (!svc?.port) return new Response('Not Found', { status: 404 });
 
         try {
             return await proxyRequest(svc.port, req);

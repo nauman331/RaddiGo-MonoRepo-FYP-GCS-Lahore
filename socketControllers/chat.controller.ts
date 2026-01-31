@@ -1,4 +1,4 @@
-import { on, joinRoom, leaveRoom, sendToSocket, sendToRoom } from "../config/socket";
+import { on, joinRoom, leaveRoom, sendToSocket, sendToRoom } from "../apps/order-service/socket";
 
 export const setupChatController = () => {
     on("connection", (data) => {

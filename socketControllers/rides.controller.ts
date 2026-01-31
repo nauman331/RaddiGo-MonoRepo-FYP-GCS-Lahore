@@ -1,8 +1,8 @@
-import { on, sendToSocket, sendToRoom } from "../config/socket";
-import redis from "../config/redis";
-import type { DriverLocation } from "../types/index";
-import mysql from "../config/sqldb";
-import { NearbyDrivers } from "../utils/findNearbyDrivers";
+import { on, sendToSocket, sendToRoom } from "../apps/order-service/socket";
+import redis from "../apps/order-service/redis";
+import type { DriverLocation } from "../packages/types/index";
+import mysql from "../apps/order-service/sqldb";
+import { NearbyDrivers } from "../apps/order-service/findNearbyDrivers";
 
 export const setupRidesController = () => {
     on("connection", (data) => {
