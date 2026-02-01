@@ -9,10 +9,10 @@ export const adminServiceRoutes = {
                 return new Response(authResult.error || 'Unauthorized', { status: 401 });
             }
             (req as any).user = authResult.user;
-            // const roleResult = await rolesMiddleware(req as any, ['admin']);
-            // if (!roleResult) {
-            //     return new Response('Forbidden', { status: 403 });
-            // }
+            const roleResult = await rolesMiddleware(req as any, ['admin']);
+            if (!roleResult) {
+                return new Response('Forbidden', { status: 403 });
+            }
             return await sendPushNotificationToAllUsers(req);
         },
     }

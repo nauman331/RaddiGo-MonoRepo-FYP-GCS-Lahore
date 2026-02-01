@@ -2,7 +2,7 @@ import * as CategoryController from './category.controller';
 import { authMiddleware, rolesMiddleware } from '../auth-service/auth.middleware';
 
 export const CategoryRoutes = {
-    '/api/v1/category': {
+    '/category/api/v1/categories': {
         POST: async (req: Request) => {
             const authResult = authMiddleware(req);
             if (!authResult.authorized) {

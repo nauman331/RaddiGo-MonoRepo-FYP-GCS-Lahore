@@ -2,19 +2,19 @@ import * as AuthController from './auth.controller';
 import { authMiddleware } from './auth.middleware';
 
 export const AuthRoutes = {
-    '/api/v1/login': {
+    '/auth/api/v1/login': {
         POST: async (req: Request) => await AuthController.login(req),
     },
-    '/api/v1/register': {
+    '/auth/api/v1/register': {
         POST: async (req: Request) => await AuthController.register(req),
     },
-    '/api/v1/verify-email': {
+    '/auth/api/v1/verify-email': {
         POST: async (req: Request) => await AuthController.verifyEmail(req),
     },
-    '/api/v1/resend-verification-email': {
+    '/auth/api/v1/resend-verification-email': {
         POST: async (req: Request) => await AuthController.resendVerificationEmail(req),
     },
-    '/api/v1/me': {
+    '/auth/api/v1/me': {
         GET: async (req: Request) => {
             const authResult = authMiddleware(req);
             if (!authResult.authorized) {
@@ -24,7 +24,7 @@ export const AuthRoutes = {
             return await AuthController.getMe(req);
         },
     },
-    '/api/v1/me/delete': {
+    '/auth/api/v1/me/delete': {
         DELETE: async (req: Request) => {
             const authResult = authMiddleware(req);
             if (!authResult.authorized) {
@@ -34,7 +34,7 @@ export const AuthRoutes = {
             return await AuthController.deleteMe(req);
         },
     },
-    '/api/v1/reset-password': {
+    '/auth/api/v1/reset-password': {
         POST: async (req: Request) => await AuthController.resetPassword(req),
     }
 }
