@@ -13,6 +13,9 @@ FROM base AS development
 ENV NODE_ENV=development
 COPY apps/category-service ./apps/category-service
 COPY apps/auth-service ./apps/auth-service
+COPY apps/order-service ./apps/order-service
+COPY apps/utils ./apps/utils
+COPY apps/ThirdPartyservices ./apps/ThirdPartyservices
 WORKDIR /app/apps/category-service
 EXPOSE 3003
 CMD ["bun", "run", "dev"]
@@ -27,6 +30,9 @@ RUN bun install --frozen-lockfile --production
 # Copy category service code
 COPY apps/category-service ./apps/category-service
 COPY apps/auth-service ./apps/auth-service
+COPY apps/order-service ./apps/order-service
+COPY apps/utils ./apps/utils
+COPY apps/ThirdPartyservices ./apps/ThirdPartyservices
 WORKDIR /app/apps/category-service
 
 # Create non-root user

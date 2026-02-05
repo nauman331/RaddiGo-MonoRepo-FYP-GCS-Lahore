@@ -12,7 +12,10 @@ RUN bun install --frozen-lockfile
 FROM base AS development
 ENV NODE_ENV=development
 COPY apps/order-service ./apps/order-service
+COPY apps/auth-service ./apps/auth-service
+COPY apps/category-service ./apps/category-service
 COPY apps/ThirdPartyservices ./apps/ThirdPartyservices
+COPY apps/utils ./apps/utils
 WORKDIR /app/apps/order-service
 EXPOSE 3004
 CMD ["bun", "run", "dev"]
@@ -26,7 +29,10 @@ RUN bun install --frozen-lockfile --production
 
 # Copy order service code
 COPY apps/order-service ./apps/order-service
+COPY apps/auth-service ./apps/auth-service
+COPY apps/category-service ./apps/category-service
 COPY apps/ThirdPartyservices ./apps/ThirdPartyservices
+COPY apps/utils ./apps/utils
 WORKDIR /app/apps/order-service
 
 # Create non-root user

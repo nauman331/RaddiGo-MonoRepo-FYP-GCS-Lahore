@@ -12,6 +12,8 @@ RUN bun install --frozen-lockfile
 FROM base AS development
 ENV NODE_ENV=development
 COPY apps/auth-service ./apps/auth-service
+COPY apps/utils ./apps/utils
+COPY apps/ThirdPartyservices ./apps/ThirdPartyservices
 WORKDIR /app/apps/auth-service
 EXPOSE 3002
 CMD ["bun", "run", "dev"]
@@ -25,6 +27,8 @@ RUN bun install --frozen-lockfile --production
 
 # Copy auth service code
 COPY apps/auth-service ./apps/auth-service
+COPY apps/utils ./apps/utils
+COPY apps/ThirdPartyservices ./apps/ThirdPartyservices
 WORKDIR /app/apps/auth-service
 
 # Create non-root user
