@@ -1,0 +1,151 @@
+services:
+  # Gateway Service
+  gateway:
+    build:
+      context: .
+      dockerfile: ./apps/gateway/Dockerfile
+      target: development
+    container_name: raddigo-gateway-dev
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./apps/gateway:/app/apps/gateway
+      - ./packages:/app/packages
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - GATEWAY_PORT=3001
+      - AUTH_PORT=3002
+      - CATEGORY_PORT=3003
+      - ORDER_PORT=3004
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
+    env_file:
+      - .env
+    depends_on:
+      - auth-service
+      - category-service
+      - order-service
+    networks:
+      - raddigo-network
+    restart: unless-stopped
+
+  # Auth Service
+  auth-service:
+    build:
+      context: .
+      dockerfile: ./apps/auth-service/Dockerfile
+      target: development
+    container_name: raddigo-auth-dev
+    ports:
+      - "3002:3002"
+    volumes:
+      - ./apps/auth-service:/app/apps/auth-service
+      - ./packages:/app/packages
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - AUTH_PORT=3002
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_SSL_MODE=${DB_SSL_MODE}
+      - REDIS_URL=${REDIS_URL}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
+      - NODEMAILER_PASS=${NODEMAILER_PASS}
+      - NODEMAILER_USER=${NODEMAILER_USER}
+      - NODEMAILER_HOST=${NODEMAILER_HOST}
+      - NODEMAILER_PORT=${NODEMAILER_PORT}
+    env_file:
+      - .env
+    networks:
+      - raddigo-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Category Service
+  category-service:
+    build:
+      context: .
+      dockerfile: ./apps/category-service/Dockerfile
+      target: development
+    container_name: raddigo-category-dev
+    ports:
+      - "3003:3003"
+    volumes:
+      - ./apps/category-service:/app/apps/category-service
+      - ./packages:/app/packages
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - CATEGORY_PORT=3003
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_SSL_MODE=${DB_SSL_MODE}
+      - REDIS_URL=${REDIS_URL}
+    env_file:
+      - .env
+    networks:
+      - raddigo-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Order Service
+  order-service:
+    build:
+      context: .
+      dockerfile: ./apps/order-service/Dockerfile
+      target: development
+    container_name: raddigo-order-dev
+    ports:
+      - "3004:3004"
+    volumes:
+      - ./apps/order-service:/app/apps/order-service
+      - ./packages:/app/packages
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - ORDER_PORT=3004
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_SSL_MODE=${DB_SSL_MODE}
+      - REDIS_URL=${REDIS_URL}
+      - RADIUS_KM=${RADIUS_KM}
+      - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}
+      - FIREBASE_CLIENT_EMAIL=${FIREBASE_CLIENT_EMAIL}
+      - FIREBASE_PRIVATE_KEY=${FIREBASE_PRIVATE_KEY}
+    env_file:
+      - .env
+    networks:
+      - raddigo-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  raddigo-network:
+    driver: bridge
+    name: raddigo-dev-network
+
+volumes:
+  node_modules:

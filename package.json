@@ -7,7 +7,19 @@
   ],
   "scripts": {
     "dev:backend": "bun --filter './apps/*-service' dev & bun --filter gateway dev",
-    "start": "bun --cwd apps/gateway dev"
+    "start": "bun --cwd apps/gateway dev",
+    "docker:dev": "docker-compose up --build",
+    "docker:dev:detach": "docker-compose up --build -d",
+    "docker:dev:logs": "docker-compose logs -f",
+    "docker:dev:stop": "docker-compose down",
+    "docker:dev:clean": "docker-compose down -v --rmi all",
+    "docker:prod": "docker-compose -f docker-compose.prod.yml up --build -d",
+    "docker:prod:stop": "docker-compose -f docker-compose.prod.yml down",
+    "docker:prod:logs": "docker-compose -f docker-compose.prod.yml logs -f",
+    "docker:build": "docker-compose build",
+    "docker:build:prod": "docker-compose -f docker-compose.prod.yml build",
+    "docker:health": "docker ps --format 'table {{.Names}}\\t{{.Status}}\\t{{.Ports}}'",
+    "docker:prune": "docker system prune -af && docker volume prune -f"
   },
   "dependencies": {
     "firebase-admin": "^13.6.0",

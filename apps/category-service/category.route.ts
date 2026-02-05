@@ -2,6 +2,19 @@ import * as CategoryController from './category.controller';
 import { authMiddleware, rolesMiddleware } from '../auth-service/auth.middleware';
 
 export const CategoryRoutes = {
+    '/health': {
+        GET: async (req: Request) => {
+            return new Response(JSON.stringify({
+                status: 'ok',
+                service: 'category-service',
+                timestamp: new Date().toISOString(),
+                uptime: process.uptime()
+            }), {
+                status: 200,
+                headers: { 'content-type': 'application/json' }
+            });
+        },
+    },
     '/category/api/v1/categories': {
         POST: async (req: Request) => {
             const authResult = authMiddleware(req);

@@ -2,6 +2,19 @@ import * as AuthController from './auth.controller';
 import { authMiddleware } from './auth.middleware';
 
 export const AuthRoutes = {
+    '/health': {
+        GET: async (req: Request) => {
+            return new Response(JSON.stringify({
+                status: 'ok',
+                service: 'auth-service',
+                timestamp: new Date().toISOString(),
+                uptime: process.uptime()
+            }), {
+                status: 200,
+                headers: { 'content-type': 'application/json' }
+            });
+        },
+    },
     '/auth/api/v1/login': {
         POST: async (req: Request) => await AuthController.login(req),
     },

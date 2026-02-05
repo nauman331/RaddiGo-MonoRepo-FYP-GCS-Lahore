@@ -1,0 +1,56 @@
+# Base Dockerfile for BunJS microservices
+FROM oven/bun:1.1-slim AS base
+WORKDIR /app
+
+# Copy package.json and bun.lockb for dependency caching
+COPY package.json bun.lockb* ./
+COPY packages ./packages
+
+# Install all dependencies (including workspaces)
+RUN bun install --frozen-lockfile
+
+# Production dependencies stage
+FROM base AS prod-deps
+ENV NODE_ENV=production
+RUN bun install --frozen-lockfile --production
+
+# Development stage
+FROM base AS dev
+ENV NODE_ENV=development
+COPY apps ./apps
+EXPOSE 3000
+CMD ["bun", "run", "dev"]
+
+# Build stage for production
+FROM base AS build
+ENV NODE_ENV=production
+COPY apps ./apps
+COPY tsconfig.json ./
+# Build the application if needed (BunJS typically doesn't need compilation)
+# RUN bun run build
+
+# Production stage
+FROM oven/bun:1.1-slim AS production
+WORKDIR /app
+ENV NODE_ENV=production
+
+# Copy production dependencies
+COPY --from=prod-deps /app/node_modules ./node_modules
+COPY --from=prod-deps /app/packages ./packages
+
+# Copy application code
+COPY --from=build /app/apps ./apps
+COPY --from=build /app/package.json ./
+COPY --from=build /app/tsconfig.json ./
+
+# Create non-root user for security
+RUN groupadd -g 1001 -r bunuser && useradd -r -g bunuser -u 1001 bunuser
+USER bunuser
+
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:3000/health || exit 1
+
+CMD ["bun", "run", "start"]
