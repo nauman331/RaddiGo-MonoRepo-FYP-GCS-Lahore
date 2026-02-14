@@ -15,7 +15,7 @@ services:
       - CATEGORY_PORT=3003
       - ORDER_PORT=3004
     env_file:
-      - .env.production
+      - .env
     depends_on:
       auth-service:
         condition: service_healthy

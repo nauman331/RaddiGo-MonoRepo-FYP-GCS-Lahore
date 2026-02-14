@@ -1,36 +1,37 @@
-import { SQL } from "bun";
+import mysql from 'mysql2/promise';
 import { runMigrations } from "../../packages/config/mysqlMigrations/index.migration";
 
 // Create a connection without database to create the database first
-const mysqlWithoutDB = new SQL({
-  adapter: "mysql",
-  hostname: process.env.DB_HOST,
+const dbConfigWithoutDB = {
+  host: process.env.DB_HOST,
   port: Number(process.env.DB_PORT),
-  username: process.env.DB_USER,
+  user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   ssl: process.env.DB_SSL_MODE === "REQUIRED" ? { rejectUnauthorized: true } : undefined,
-});
+};
 
-const mysql = new SQL({
-  adapter: "mysql",
-  hostname: process.env.DB_HOST,
+const dbConfig = {
+  host: process.env.DB_HOST,
   port: Number(process.env.DB_PORT),
   database: process.env.DB_NAME,
-  username: process.env.DB_USER,
+  user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   ssl: process.env.DB_SSL_MODE === "REQUIRED" ? { rejectUnauthorized: true } : undefined,
-});
+};
+
+const pool = mysql.createPool(dbConfig);
 
 export async function connectDB() {
   try {
     // First connect without database and create it
-    await mysqlWithoutDB.connect();
-    await mysqlWithoutDB`CREATE DATABASE IF NOT EXISTS ${mysqlWithoutDB.unsafe(process.env.DB_NAME || 'raddigo')}`;
-    await mysqlWithoutDB.close();
+    const tempConnection = await mysql.createConnection(dbConfigWithoutDB);
+    await tempConnection.execute(`CREATE DATABASE IF NOT EXISTS \`${process.env.DB_NAME || 'raddigo'}\``);
+    await tempConnection.end();
 
-    // Now connect to the database
-    await mysql.connect();
+    // Test connection to the database
+    const connection = await pool.getConnection();
     console.log("MySQL database connected successfully");
+    connection.release();
     await runMigrations();
   } catch (error) {
     console.error("Database connection failed:", error);
@@ -38,4 +39,4 @@ export async function connectDB() {
   }
 }
 
-export default mysql;
+export default pool;

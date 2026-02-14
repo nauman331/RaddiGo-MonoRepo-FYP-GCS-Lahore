@@ -1,36 +1,37 @@
-import { SQL } from "bun";
+import mysql from 'mysql2/promise';
 import { userMigration } from "./user.migration";
 import { DB_CONFIG } from "@raddi/config";
 // Create a connection without database to create the database first
-const mysqlWithoutDB = new SQL({
-  adapter: "mysql",
-  hostname: DB_CONFIG.HOST,
+const dbConfigWithoutDB = {
+  host: DB_CONFIG.HOST,
   port: DB_CONFIG.PORT,
-  username: DB_CONFIG.USER,
+  user: DB_CONFIG.USER,
   password: DB_CONFIG.PASSWORD,
   ssl: DB_CONFIG.SSL_MODE === "REQUIRED" ? { rejectUnauthorized: true } : undefined,
-});
+};
 
-const mysql = new SQL({
-  adapter: "mysql",
-  hostname: DB_CONFIG.HOST,
+const dbConfig = {
+  host: DB_CONFIG.HOST,
   port: DB_CONFIG.PORT,
   database: DB_CONFIG.NAME,
-  username: DB_CONFIG.USER,
+  user: DB_CONFIG.USER,
   password: DB_CONFIG.PASSWORD,
   ssl: DB_CONFIG.SSL_MODE === "REQUIRED" ? { rejectUnauthorized: true } : undefined,
-});
+};
+
+const pool = mysql.createPool(dbConfig);
 
 export async function connectDB() {
   try {
     // First connect without database and create it
-    await mysqlWithoutDB.connect();
-    await mysqlWithoutDB`CREATE DATABASE IF NOT EXISTS ${mysqlWithoutDB.unsafe(DB_CONFIG.NAME)}`;
-    await mysqlWithoutDB.close();
+    const tempConnection = await mysql.createConnection(dbConfigWithoutDB);
+    await tempConnection.execute(`CREATE DATABASE IF NOT EXISTS \`${DB_CONFIG.NAME}\``);
+    await tempConnection.end();
 
-    // Now connect to the database
-    await mysql.connect();
+    // Test connection to the database
+    const connection = await pool.getConnection();
     console.log("MySQL database connected successfully");
+    connection.release();
     // await userMigration();
   } catch (error) {
     console.error("Database connection failed:", error);
@@ -38,4 +39,4 @@ export async function connectDB() {
   }
 }
 
-export default mysql;
+export default pool;
