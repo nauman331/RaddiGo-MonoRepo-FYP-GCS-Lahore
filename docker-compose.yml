@@ -141,6 +141,20 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: raddigo-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: yourpassword
+      MYSQL_DATABASE: raddigo
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - raddigo-network
 
 networks:
   raddigo-network:
@@ -149,3 +163,4 @@ networks:
 
 volumes:
   node_modules:
+  mysql_data:
