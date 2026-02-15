@@ -12,6 +12,7 @@ services:
       - NODE_ENV=production
       - GATEWAY_PORT=3001
       - AUTH_PORT=3002
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
       - CATEGORY_PORT=3003
       - ORDER_PORT=3004
     env_file:
@@ -89,6 +90,7 @@ services:
     environment:
       - NODE_ENV=production
       - CATEGORY_PORT=3003
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
     env_file:
       - .env.production
     networks:
@@ -126,6 +128,7 @@ services:
     environment:
       - NODE_ENV=production
       - ORDER_PORT=3004
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
     env_file:
       - .env.production
     networks:
@@ -144,6 +147,16 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+  
+  # Redis (in-memory cache)
+  redis:
+    image: redis:7-alpine
+    container_name: raddigo-redis-prod
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    networks:
+      - raddigo-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3004/health"]
       interval: 30s
@@ -176,3 +189,6 @@ networks:
   raddigo-network:
     driver: bridge
     name: raddigo-prod-network
+
+volumes:
+  redis_data:

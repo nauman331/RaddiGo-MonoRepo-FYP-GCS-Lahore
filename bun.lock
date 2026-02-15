@@ -45,6 +45,12 @@
     "packages/config": {
       "name": "@raddi/config",
     },
+    "packages/db": {
+      "name": "@raddi/db",
+    },
+    "packages/middleware": {
+      "name": "@raddi/middleware",
+    },
     "packages/types": {
       "name": "@raddi/types",
     },
@@ -111,6 +117,10 @@
     "@protobufjs/utf8": ["@protobufjs/utf8@1.1.0", "", {}, "sha512-Vvn3zZrhQZkkBE8LSuW3em98c0FwgO4nxzv6OdSxPKJIEKY2bGbHn+mhGIPerzI4twdxaP8/0+06HBpwf345Lw=="],
 
     "@raddi/config": ["@raddi/config@workspace:packages/config"],
+
+    "@raddi/db": ["@raddi/db@workspace:packages/db"],
+
+    "@raddi/middleware": ["@raddi/middleware@workspace:packages/middleware"],
 
     "@raddi/types": ["@raddi/types@workspace:packages/types"],
 

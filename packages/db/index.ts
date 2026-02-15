@@ -1,43 +1,55 @@
 import mysql from 'mysql2/promise';
-import { DB_CONFIG } from '../config/index';
+import '../config/loadEnv';
+import { userMigration } from './migrations/user.migration';
+import { categoriesMigration } from './migrations/categories.migration';
+import { ordersMigration } from './migrations/orders.migration';
 
 const dbConfigWithoutDB = {
-    host: DB_CONFIG.HOST,
-    port: DB_CONFIG.PORT,
-    user: DB_CONFIG.USER,
-    password: DB_CONFIG.PASSWORD,
-    ssl: DB_CONFIG.SSL_MODE === 'REQUIRED' ? { rejectUnauthorized: true } : undefined,
+    host: process.env.DB_HOST || 'localhost',
+    port: Number(process.env.DB_PORT) || 3306,
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || '',
+    ssl: process.env.DB_SSL_MODE === 'REQUIRED' ? { rejectUnauthorized: true } : undefined,
 };
 
 const dbConfig = {
-    host: DB_CONFIG.HOST,
-    port: DB_CONFIG.PORT,
-    database: DB_CONFIG.NAME,
-    user: DB_CONFIG.USER,
-    password: DB_CONFIG.PASSWORD,
-    ssl: DB_CONFIG.SSL_MODE === 'REQUIRED' ? { rejectUnauthorized: true } : undefined,
+    host: process.env.DB_HOST || 'localhost',
+    port: Number(process.env.DB_PORT) || 3306,
+    database: process.env.DB_NAME || 'raddigo',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || '',
+    ssl: process.env.DB_SSL_MODE === 'REQUIRED' ? { rejectUnauthorized: true } : undefined,
 };
 
 const pool = mysql.createPool(dbConfig as any);
 
+async function runMigrations(poolInstance: any) {
+    // run in dependency order: users -> categories -> orders
+    await userMigration(poolInstance);
+    await categoriesMigration(poolInstance);
+    await ordersMigration(poolInstance);
+}
+
 export async function connectDB(retries = 10, delay = 3000) {
-    for (let i = 0; i < retries; i++) {
+    for (let attempt = 1; attempt <= retries; attempt++) {
         try {
             const tempConnection = await mysql.createConnection(dbConfigWithoutDB as any);
-            await tempConnection.execute(`CREATE DATABASE IF NOT EXISTS \`${DB_CONFIG.NAME}\``);
+            await tempConnection.execute(`CREATE DATABASE IF NOT EXISTS \`${dbConfig.database}\``);
             await tempConnection.end();
 
-            const connection = await pool.getConnection();
-            console.log('MySQL database connected successfully (shared)');
-            connection.release();
+            // verify pool can get a connection
+            const conn = await pool.getConnection();
+            conn.release();
+
+            // run migrations once DB is available
+            await runMigrations(pool);
+
+            console.log('MySQL database connected and migrations applied');
             return pool;
-        } catch (error: any) {
-            console.error(`Shared DB connection failed (attempt ${i + 1}/${retries}):`, error.message || error);
-            if (i < retries - 1) {
-                await new Promise(res => setTimeout(res, delay));
-            } else {
-                throw error;
-            }
+        } catch (err: any) {
+            console.error(`DB connect attempt ${attempt}/${retries} failed:`, err.message || err);
+            if (attempt < retries) await new Promise((r) => setTimeout(r, delay));
+            else throw err;
         }
     }
 }

@@ -1,7 +1,7 @@
 import Redis from 'ioredis';
-import { DB_CONFIG } from '../config/index';
+import '../config/loadEnv';
 
-const redisUrl = DB_CONFIG.REDIS_URL || process.env.REDIS_URL || 'redis://localhost:6379';
+const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
 
 const redis = new Redis(redisUrl);
 

@@ -20,12 +20,10 @@ export const DB_CONFIG = {
 export const API_URL = `http://localhost:${PORTS.GATEWAY}`;
 
 import { connectDB as connectSharedDB } from '../db/index';
-import { runMigrations } from './mysqlMigrations/index.migration';
 import { connectRedis as connectSharedRedis } from '../db/redis';
 
 export async function connectDB(retries = 10, delay = 3000) {
     await connectSharedDB(retries, delay);
-    await runMigrations();
 }
 
 export async function connectRedis(retries = 10, delay = 3000) {

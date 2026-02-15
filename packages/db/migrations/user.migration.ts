@@ -1,6 +1,4 @@
-import pool from '../../packages/db';
-
-export async function userMigration() {
+export async function userMigration(pool: any) {
   await pool.execute(`
     CREATE TABLE IF NOT EXISTS users (
       id INT AUTO_INCREMENT PRIMARY KEY,

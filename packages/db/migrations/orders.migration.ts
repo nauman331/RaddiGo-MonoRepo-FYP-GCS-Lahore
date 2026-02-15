@@ -1,6 +1,4 @@
-import pool from '../../packages/db';
-
-export async function ordersMigration() {
+export async function ordersMigration(pool: any) {
   await pool.execute(`
     CREATE TABLE IF NOT EXISTS orders (
       id INT AUTO_INCREMENT PRIMARY KEY,

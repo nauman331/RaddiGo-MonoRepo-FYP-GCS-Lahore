@@ -52,7 +52,7 @@ services:
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_SSL_MODE=${DB_SSL_MODE}
-      - REDIS_URL=${REDIS_URL}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
       - NODEMAILER_PASS=${NODEMAILER_PASS}
@@ -92,7 +92,7 @@ services:
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_SSL_MODE=${DB_SSL_MODE}
-      - REDIS_URL=${REDIS_URL}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
     env_file:
       - .env
     networks:
@@ -126,7 +126,7 @@ services:
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_SSL_MODE=${DB_SSL_MODE}
-      - REDIS_URL=${REDIS_URL}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
       - RADIUS_KM=${RADIUS_KM}
       - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}
       - FIREBASE_CLIENT_EMAIL=${FIREBASE_CLIENT_EMAIL}
@@ -156,6 +156,18 @@ services:
     networks:
       - raddigo-network
 
+  # Redis (in-memory cache)
+  redis:
+    image: redis:7-alpine
+    container_name: raddigo-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - raddigo-network
+
 networks:
   raddigo-network:
     driver: bridge
@@ -164,3 +176,4 @@ networks:
 volumes:
   node_modules:
   mysql_data:
+  redis_data:
