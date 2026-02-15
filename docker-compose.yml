@@ -16,8 +16,11 @@ services:
       - NODE_ENV=development
       - GATEWAY_PORT=3001
       - AUTH_PORT=3002
+      - AUTH_HOST=auth-service
       - CATEGORY_PORT=3003
+      - CATEGORY_HOST=category-service
       - ORDER_PORT=3004
+      - ORDER_HOST=order-service
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
     env_file:
@@ -46,6 +49,7 @@ services:
     environment:
       - NODE_ENV=development
       - AUTH_PORT=3002
+      - AUTH_HOST=auth-service
       - DB_HOST=${DB_HOST}
       - DB_PORT=${DB_PORT}
       - DB_NAME=${DB_NAME}
