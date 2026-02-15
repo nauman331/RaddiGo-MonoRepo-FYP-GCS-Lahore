@@ -1,5 +1,6 @@
-import mysql from "./sqldb";
+import pool from "./sqldb";
 import type { IUser } from "../../packages/types/index";
+import type { RowDataPacket } from "mysql2";
 import { sendPasswordResetEmail } from "../utils/mailsender";
 import { signToken } from "../utils/jwttoken";
 import redis from "./redis";
@@ -15,16 +16,20 @@ const register = async (req: Request): Promise<Response> => {
             return Response.json({ message: 'Missing required fields' }, { status: 400 });
         }
 
-        const [existingEmail] = await mysql<IUser[]>`
-            SELECT * FROM users WHERE email = ${email}
-        `;
+        const [existingEmailRows] = await pool.query<RowDataPacket[]>(
+            "SELECT * FROM users WHERE email = ?",
+            [email]
+        );
+        const existingEmail = (existingEmailRows as unknown as IUser[])[0];
         if (existingEmail) {
             return Response.json({ message: 'Email already in use' }, { status: 400 });
         }
 
-        const [existingPhone] = await mysql<IUser[]>`
-            SELECT * FROM users WHERE phone = ${phone}
-        `;
+        const [existingPhoneRows] = await pool.query<RowDataPacket[]>(
+            "SELECT * FROM users WHERE phone = ?",
+            [phone]
+        );
+        const existingPhone = (existingPhoneRows as unknown as IUser[])[0];
         if (existingPhone) {
             return Response.json({ message: 'Phone number already in use' }, { status: 400 });
         }
@@ -35,10 +40,10 @@ const register = async (req: Request): Promise<Response> => {
 
         await sendPasswordResetEmail(email, otp);
 
-        await mysql`
-            INSERT INTO users (username, email, password, phone, role, isVerified, otp, otpExpiry)
-            VALUES (${username}, ${email}, ${hashedPassword}, ${phone}, 'customer', false, ${otp}, ${otpExpiry})
-        `;
+        await pool.execute(
+            "INSERT INTO users (username, email, password, phone, role, isVerified, otp, otpExpiry) VALUES (?, ?, ?, ?, 'customer', false, ?, ?)",
+            [username, email, hashedPassword, phone, otp, otpExpiry]
+        );
 
         return Response.json({ message: 'Register successful. Please check your email for OTP' }, { status: 200 });
     } catch (error) {
@@ -54,9 +59,11 @@ const verifyEmail = async (req: Request): Promise<Response> => {
             return Response.json({ message: 'Missing required fields' }, { status: 400 });
         }
 
-        const [user] = await mysql<IUser[]>`
-            SELECT * FROM users WHERE email = ${email}
-        `;
+        const [userRows] = await pool.query<RowDataPacket[]>(
+            "SELECT * FROM users WHERE email = ?",
+            [email]
+        );
+        const user = (userRows as unknown as IUser[])[0];
 
         if (!user) {
             return Response.json({ message: 'Invalid OTP or email' }, { status: 400 });
@@ -71,10 +78,10 @@ const verifyEmail = async (req: Request): Promise<Response> => {
             return Response.json({ message: 'Invalid OTP' }, { status: 400 });
         }
 
-        await mysql`
-            UPDATE users SET isVerified = true, otp = NULL, otpExpiry = NULL 
-            WHERE id = ${user.id}
-        `;
+        await pool.execute(
+            "UPDATE users SET isVerified = true, otp = NULL, otpExpiry = NULL WHERE id = ?",
+            [user.id]
+        );
 
         return Response.json({ message: 'Email verified successfully' }, { status: 200 });
     } catch (error) {
@@ -89,24 +96,26 @@ const login = async (req: Request): Promise<Response> => {
             return Response.json({ message: 'Missing required fields' }, { status: 400 });
         }
 
-        const [user] = await mysql<IUser[]>`
-            SELECT * FROM users WHERE email = ${email}
-        `;
+        const [userRows2] = await pool.query<RowDataPacket[]>(
+            "SELECT * FROM users WHERE email = ?",
+            [email]
+        );
+        const user2 = (userRows2 as unknown as IUser[])[0];
 
-        if (!user) {
+        if (!user2) {
             return Response.json({ message: 'Email Not registered' }, { status: 401 });
         }
 
-        const isPasswordValid = await Bun.password.verify(password, user.password, "bcrypt");
+        const isPasswordValid = user2 ? await Bun.password.verify(password, user2.password, "bcrypt") : false;
         if (!isPasswordValid) {
             return Response.json({ message: 'Invalid password' }, { status: 401 });
         }
-        if (!user.isVerified) {
+        if (!user2.isVerified) {
             return Response.json({ message: 'Email not verified' }, { status: 403 });
         }
 
-        const token = signToken(user.id.toString());
-        return Response.json({ token, userId: user.id, role: user.role, isOk: true }, { status: 200 });
+        const token = signToken(user2.id.toString());
+        return Response.json({ token, userId: user2.id, role: user2.role, isOk: true }, { status: 200 });
     } catch (error) {
         console.error('Login error:', error);
         return Response.json({ message: 'Login failed' }, { status: 500 });
@@ -120,21 +129,23 @@ const resendVerificationEmail = async (req: Request): Promise<Response> => {
             return Response.json({ message: 'Missing required fields' }, { status: 400 });
         }
 
-        const [user] = await mysql<IUser[]>`
-            SELECT * FROM users WHERE email = ${email}
-        `;
+        const [userRows3] = await pool.query<RowDataPacket[]>(
+            "SELECT * FROM users WHERE email = ?",
+            [email]
+        );
+        const user3 = (userRows3 as unknown as IUser[])[0];
 
-        if (!user) {
+        if (!user3) {
             return Response.json({ message: 'Email Not registered' }, { status: 401 });
         }
 
         const otp = generateOTP();
         const otpExpiry = new Date(Date.now() + 15 * 60000); // 15 minutes
 
-        await mysql`
-            UPDATE users SET otp = ${otp}, otpExpiry = ${otpExpiry} 
-            WHERE id = ${user.id}
-        `;
+        await pool.execute(
+            "UPDATE users SET otp = ?, otpExpiry = ? WHERE id = ?",
+            [otp, otpExpiry, user3.id]
+        );
 
         await sendPasswordResetEmail(email, otp);
         return Response.json({ message: 'Verification OTP resent successfully' }, { status: 200 });
@@ -163,9 +174,11 @@ const getMe = async (req: Request): Promise<Response> => {
             return Response.json({ user: userObj }, { status: 200 });
         }
 
-        const [userData] = await mysql<IUser[]>`
-            SELECT * FROM users WHERE id = ${user.userId}
-        `;
+        const [userDataRows] = await pool.query<RowDataPacket[]>(
+            "SELECT * FROM users WHERE id = ?",
+            [user.userId]
+        );
+        const userData = (userDataRows as unknown as IUser[])[0];
 
         if (!userData) {
             return Response.json({ message: 'User not found' }, { status: 404 });
@@ -185,9 +198,10 @@ const deleteMe = async (req: Request): Promise<Response> => {
             return Response.json({ message: 'Unauthorized' }, { status: 401 });
         }
 
-        await mysql`
-            DELETE FROM users WHERE id = ${user.userId}
-        `;
+        await pool.execute(
+            "DELETE FROM users WHERE id = ?",
+            [user.userId]
+        );
 
         await redis.del(`user:${user.userId}`);
         return Response.json({ message: 'User deleted successfully' }, { status: 200 });
@@ -203,22 +217,25 @@ const resetPassword = async (req: Request): Promise<Response> => {
             return Response.json({ message: 'Missing required fields' }, { status: 400 });
         }
 
-        const [user] = await mysql<IUser[]>`
-        SELECT * FROM users WHERE email = ${email}
-        `;
-        if (!user) {
+        const [userRows4] = await pool.query<RowDataPacket[]>(
+            "SELECT * FROM users WHERE email = ?",
+            [email]
+        );
+        const user4 = (userRows4 as unknown as IUser[])[0];
+        if (!user4) {
             return Response.json({ message: 'User not found' }, { status: 404 });
         }
-        if (user.otp !== otp) {
+        if (user4.otp !== otp) {
             return Response.json({ message: 'Invalid OTP' }, { status: 400 });
         }
-        if (!user.otpExpiry || new Date(user.otpExpiry) < new Date()) {
+        if (!user4.otpExpiry || new Date(user4.otpExpiry) < new Date()) {
             return Response.json({ message: 'OTP has expired! Request a new one' }, { status: 400 });
         }
         const hashedPassword = await Bun.password.hash(password, "bcrypt");
-        await mysql`
-        UPDATE users SET password = ${hashedPassword}, otp = NULL, otpExpiry = NULL 
-        WHERE id = ${user.id}`;
+        await pool.execute(
+            "UPDATE users SET password = ?, otp = NULL, otpExpiry = NULL WHERE id = ?",
+            [hashedPassword, user4.id]
+        );
 
         return Response.json({ message: 'Password reset successfully' }, { status: 200 });
 

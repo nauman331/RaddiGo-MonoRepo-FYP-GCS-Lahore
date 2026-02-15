@@ -1,5 +1,6 @@
-import mysql from "./sqldb";
+import pool from "./sqldb";
 import type { ICategory } from "../../packages/types/index";
+import type { RowDataPacket } from "mysql2";
 import redis from "./redis";
 
 export const createCategory = async (req: Request) => {
@@ -8,16 +9,18 @@ export const createCategory = async (req: Request) => {
         if (!name) {
             return Response.json({ message: "Category name is required" }, { status: 400 });
         }
-        const [existingCategory] = await mysql<ICategory[]>`
-            SELECT * FROM categories WHERE name = ${name}
-        `;
+        const [existingCategoryRows] = await pool.query<RowDataPacket[]>(
+            "SELECT * FROM categories WHERE name = ?",
+            [name]
+        );
+        const existingCategory = (existingCategoryRows as unknown as ICategory[])[0];
         if (existingCategory) {
             return Response.json({ message: "Category already exists" }, { status: 400 });
         }
-        await mysql`
-            INSERT INTO categories (name, categoryLogo)
-            VALUES (${name}, ${categoryLogo || null})
-        `;
+        await pool.execute(
+            "INSERT INTO categories (name, categoryLogo) VALUES (?, ?)",
+            [name, categoryLogo || null]
+        );
         await redis.del("categories:list");
         const keys = await redis.keys("categories:list:page:*");
         if (keys.length > 0) {
@@ -35,15 +38,18 @@ export const deleteCategory = async (req: Request) => {
         if (!id) {
             return Response.json({ message: "Category ID is required" }, { status: 400 });
         }
-        const [existingCategory] = await mysql<ICategory[]>`
-            SELECT * FROM categories WHERE id = ${id}
-        `;
+        const [existingCategoryRows] = await pool.query<RowDataPacket[]>(
+            "SELECT * FROM categories WHERE id = ?",
+            [id]
+        );
+        const existingCategory = (existingCategoryRows as unknown as ICategory[])[0];
         if (!existingCategory) {
             return Response.json({ message: "Category not found" }, { status: 404 });
         }
-        await mysql`
-            DELETE FROM categories WHERE id = ${id}
-        `;
+        await pool.execute(
+            "DELETE FROM categories WHERE id = ?",
+            [id]
+        );
         await redis.del("categories:list");
         const keys = await redis.keys("categories:list:page:*");
         if (keys.length > 0) {
@@ -69,14 +75,15 @@ export const getCategories = async (req: Request): Promise<Response> => {
         if (cachedCategories) {
             return Response.json({ categories: JSON.parse(cachedCategories) }, { status: 200 });
         }
-        const [{ count }] = await mysql`
-            SELECT COUNT(*) as count FROM categories
-        `;
-        const categories = await mysql<ICategory[]>`
-            SELECT * FROM categories
-            ORDER BY id DESC
-            LIMIT ${limit} OFFSET ${offset}
-        `;
+        const [countRows] = await pool.query<RowDataPacket[]>(
+            "SELECT COUNT(*) as count FROM categories"
+        );
+        const count = (countRows as any)[0]?.count || 0;
+        const [categoriesRows] = await pool.query<RowDataPacket[]>(
+            "SELECT * FROM categories ORDER BY id DESC LIMIT ? OFFSET ?",
+            [limit, offset]
+        );
+        const categories = categoriesRows as unknown as ICategory[];
 
         const response = {
             categories,

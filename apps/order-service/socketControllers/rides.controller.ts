@@ -1,7 +1,7 @@
 import { on, sendToSocket, sendToRoom } from "../socket";
 import redis from "../redis";
 import type { DriverLocation } from "../../../packages/types/index";
-import mysql from "../sqldb";
+import pool from "../sqldb";
 import { NearbyDrivers } from "../findNearbyDrivers";
 
 export const setupRidesController = () => {
@@ -18,11 +18,16 @@ export const setupRidesController = () => {
                 return sendToSocket(socketId, "error", { message: "Invalid location data" });
             }
 
-            await redis.setex(`driver:${data.driverId}:location`, 300, JSON.stringify({
-                longitude: data.longitude,
-                latitude: data.latitude,
-                timestamp: Date.now()
-            }));
+            await redis.set(
+                `driver:${data.driverId}:location`,
+                JSON.stringify({
+                    longitude: data.longitude,
+                    latitude: data.latitude,
+                    timestamp: Date.now()
+                }),
+                'EX',
+                300
+            );
 
             console.log(`Driver ${data.driverId} location updated: (${data.latitude}, ${data.longitude})`);
             sendToSocket(socketId, "locationUpdated", { success: true, driverId: data.driverId });
@@ -46,13 +51,10 @@ export const setupRidesController = () => {
                 parseInt(process.env.RADIUS_KM || "5")
             );
             if (nearbyDrivers?.length > 0) {
-                await mysql`
-                INSERT INTO orders (customerId, pickupLatitude, pickupLongitude,
-                status, pickupAddress, scheduleTime, approximateRaddiInKg)
-                VALUES (${data.customerId}, 'null', ${data.pickupLatitude}, 
-                ${data.pickupLongitude}, 'pending', ${data.pickupAddress}, 
-                ${scheduleTime}, ${data.approximateRaddiInKg}   )
-            `;
+                await pool.execute(
+                    "INSERT INTO orders (customerId, pickupLatitude, pickupLongitude, status, pickupAddress, scheduleTime, approximateRaddiInKg) VALUES (?, ?, ?, 'pending', ?, ?, ?)",
+                    [data.customerId, data.pickupLatitude, data.pickupLongitude, data.pickupAddress, scheduleTime, data.approximateRaddiInKg]
+                );
                 nearbyDrivers.forEach((driver: any) => sendToRoom(driver.driverId, "newRideOrder", data));
                 sendToSocket(socketId, "orderCreated", { success: true, driverCount: nearbyDrivers.length });
             } else {
@@ -83,13 +85,10 @@ export const setupRidesController = () => {
                 return sendToSocket(socketId, "error", { message: "Invalid data: customerId and collectorId must be numeric" });
             }
 
-            await mysql`
-                INSERT INTO orders (customerId, collectorId, pickupLatitude, pickupLongitude, 
-                status, pickupAddress, scheduleTime, approximateRaddiInKg)
-                VALUES (${customerIdNum}, ${collectorIdNum}, ${data.pickupLatitude}, 
-                ${data.pickupLongitude}, 'accepted', ${data.pickupAddress}, ${data.scheduleTime}, 
-                ${data.approximateRaddiInKg})
-            `;
+            await pool.execute(
+                "INSERT INTO orders (customerId, collectorId, pickupLatitude, pickupLongitude, status, pickupAddress, scheduleTime, approximateRaddiInKg) VALUES (?, ?, ?, ?, 'accepted', ?, ?, ?)",
+                [customerIdNum, collectorIdNum, data.pickupLatitude, data.pickupLongitude, data.pickupAddress, data.scheduleTime, data.approximateRaddiInKg]
+            );
 
             sendToRoom(String(customerIdNum), "rideOrderAccepted", { collectorId: collectorIdNum, orderDetails: data });
             sendToSocket(socketId, "orderAccepted", { success: true });

@@ -1,7 +1,6 @@
-import mysql from "../auth-service/sqldb";
+import pool from "../auth-service/sqldb";
 
-export async function categoriesMigration() {
-  await mysql`
+await pool.execute(`
     CREATE TABLE IF NOT EXISTS categories (
       id INT AUTO_INCREMENT PRIMARY KEY,
       nameEng VARCHAR(100) NOT NULL,
@@ -11,5 +10,5 @@ export async function categoriesMigration() {
       createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )
-  `;
-}
+  `);
+// ...existing code...

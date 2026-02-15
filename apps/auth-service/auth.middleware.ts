@@ -22,7 +22,8 @@ const authMiddleware = (req: Request): { authorized: boolean; user?: any; error?
 };
 
 const rolesMiddleware = async (req: AuthRequest, allowedRoles: string[]): Promise<boolean> => {
-  const [user] = await mysql`SELECT * FROM users WHERE id = ${req.user.userId}`;
+  const [rows] = await mysql.query("SELECT * FROM users WHERE id = ?", [req.user.userId]);
+  const user = rows[0];
   if (!user || !allowedRoles.includes(user.role)) {
     return false;
   }

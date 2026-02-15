@@ -32,11 +32,12 @@ export async function connectDB() {
     const connection = await pool.getConnection();
     console.log("MySQL database connected successfully");
     connection.release();
-    // await userMigration();
+    await userMigration();
   } catch (error) {
     console.error("Database connection failed:", error);
     throw error;
   }
 }
 
-export default pool;
+import type { Pool } from 'mysql2/promise';
+export default pool as Pool;
