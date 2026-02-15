@@ -21,21 +21,28 @@ const dbConfig = {
 
 const pool = mysql.createPool(dbConfig);
 
-export async function connectDB() {
-  try {
-    // First connect without database and create it
-    const tempConnection = await mysql.createConnection(dbConfigWithoutDB);
-    await tempConnection.execute(`CREATE DATABASE IF NOT EXISTS \`${DB_CONFIG.NAME}\``);
-    await tempConnection.end();
+export async function connectDB(retries = 10, delay = 3000) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      // First connect without database and create it
+      const tempConnection = await mysql.createConnection(dbConfigWithoutDB);
+      await tempConnection.execute(`CREATE DATABASE IF NOT EXISTS \`${DB_CONFIG.NAME}\``);
+      await tempConnection.end();
 
-    // Test connection to the database
-    const connection = await pool.getConnection();
-    console.log("MySQL database connected successfully");
-    connection.release();
-    await userMigration();
-  } catch (error) {
-    console.error("Database connection failed:", error);
-    throw error;
+      // Test connection to the database
+      const connection = await pool.getConnection();
+      console.log("MySQL database connected successfully");
+      connection.release();
+      await userMigration();
+      return;
+    } catch (error) {
+      console.error(`Database connection failed (attempt ${i + 1}/${retries}):`, error.message || error);
+      if (i < retries - 1) {
+        await new Promise(res => setTimeout(res, delay));
+      } else {
+        throw error;
+      }
+    }
   }
 }
 

@@ -1,6 +1,7 @@
 import pool from "../auth-service/sqldb";
 
-await pool.execute(`
+export async function categoriesMigration() {
+  await pool.execute(`
     CREATE TABLE IF NOT EXISTS categories (
       id INT AUTO_INCREMENT PRIMARY KEY,
       nameEng VARCHAR(100) NOT NULL,
@@ -11,4 +12,4 @@ await pool.execute(`
       updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )
   `);
-// ...existing code...
+}
