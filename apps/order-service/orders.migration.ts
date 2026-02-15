@@ -1,7 +1,7 @@
-import mysql from "./sqldb";
+import pool from '../../packages/db';
 
 export async function ordersMigration() {
-  await mysql`
+  await pool.execute(`
     CREATE TABLE IF NOT EXISTS orders (
       id INT AUTO_INCREMENT PRIMARY KEY,
       customerId INT NOT NULL,
@@ -17,5 +17,5 @@ export async function ordersMigration() {
       FOREIGN KEY (customerId) REFERENCES users(id),
       FOREIGN KEY (collectorId) REFERENCES users(id)
     )
-  `;
+  `);
 }

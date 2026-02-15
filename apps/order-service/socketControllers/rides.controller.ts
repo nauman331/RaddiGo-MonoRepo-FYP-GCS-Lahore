@@ -1,7 +1,6 @@
 import { on, sendToSocket, sendToRoom } from "../socket";
-import redis from "../redis";
+import pool, { redis } from '../../../packages/db';
 import type { DriverLocation } from "../../../packages/types/index";
-import pool from "../sqldb";
 import { NearbyDrivers } from "../findNearbyDrivers";
 
 export const setupRidesController = () => {

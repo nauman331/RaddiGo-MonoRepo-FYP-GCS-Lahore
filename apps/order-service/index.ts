@@ -1,6 +1,9 @@
-import { PORTS } from "../../packages/config";
+import { PORTS, connectDB, connectRedis } from '@raddi/config';
 import { getWebSocketConfig } from "./socket";
 import { setupAllSocketControllers } from "./socketControllers";
+
+await connectDB();
+await connectRedis();
 
 const server = Bun.serve({
     port: PORTS.ORDER,

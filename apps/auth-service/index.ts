@@ -1,7 +1,5 @@
 import { AuthRoutes } from './auth.route';
-import { PORTS } from '@raddi/config';
-import { connectDB } from './sqldb';
-import { connectRedis } from './redis';
+import { PORTS, connectDB, connectRedis } from '@raddi/config';
 
 await connectDB();
 await connectRedis();

@@ -1,7 +1,6 @@
-import pool from "./sqldb";
+import pool, { redis } from '../../packages/db';
 import type { ICategory } from "../../packages/types/index";
 import type { RowDataPacket } from "mysql2";
-import redis from "./redis";
 
 export const createCategory = async (req: Request) => {
     try {

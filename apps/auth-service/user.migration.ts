@@ -1,4 +1,4 @@
-import pool from "./sqldb";
+import pool from '../../packages/db';
 
 export async function userMigration() {
   await pool.execute(`

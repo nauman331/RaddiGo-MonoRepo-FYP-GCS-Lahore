@@ -43,3 +43,5 @@ export async function connectDB(retries = 10, delay = 3000) {
 }
 
 export default pool;
+
+export { default as redis, connectRedis } from './redis';

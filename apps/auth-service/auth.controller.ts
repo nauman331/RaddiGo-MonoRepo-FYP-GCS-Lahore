@@ -1,9 +1,8 @@
-import pool from "./sqldb";
+import pool, { redis } from '../../packages/db';
 import type { IUser } from "../../packages/types/index";
 import type { RowDataPacket } from "mysql2";
 import { sendPasswordResetEmail } from "../utils/mailsender";
 import { signToken } from "../utils/jwttoken";
-import redis from "./redis";
 
 const generateOTP = (): string => {
     return Math.floor(100000 + Math.random() * 900000).toString();

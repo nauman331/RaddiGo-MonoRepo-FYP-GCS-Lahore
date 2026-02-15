@@ -1,4 +1,4 @@
-import pool from "../auth-service/sqldb";
+import pool from "../../packages/db";
 
 export async function categoriesMigration() {
   await pool.execute(`
