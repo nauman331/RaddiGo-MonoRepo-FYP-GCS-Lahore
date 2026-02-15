@@ -1,5 +1,5 @@
 import * as CategoryController from './category.controller';
-import { authMiddleware, rolesMiddleware } from '../auth-service/auth.middleware';
+import { authMiddleware, rolesMiddleware } from '../../packages/middleware';
 
 export const CategoryRoutes = {
     '/health': {

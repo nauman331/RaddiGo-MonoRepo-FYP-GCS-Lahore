@@ -1,5 +1,5 @@
 import * as AuthController from './auth.controller';
-import { authMiddleware } from './auth.middleware';
+import { authMiddleware } from '../../packages/middleware';
 
 export const AuthRoutes = {
     '/health': {
