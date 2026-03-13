@@ -4,12 +4,20 @@ import { userMigration } from './migrations/user.migration';
 import { categoriesMigration } from './migrations/categories.migration';
 import { ordersMigration } from './migrations/orders.migration';
 
+const parseBool = (v?: string) => (v === 'true' ? true : v === 'false' ? false : undefined);
+
+const buildSslConfig = () => {
+    if (process.env.DB_SSL_MODE !== 'REQUIRED') return undefined;
+    const rejectUnauthorized = parseBool(process.env.DB_SSL_REJECT_UNAUTHORIZED);
+    return { rejectUnauthorized: rejectUnauthorized ?? false } as any;
+};
+
 const dbConfigWithoutDB = {
     host: process.env.DB_HOST || 'localhost',
     port: Number(process.env.DB_PORT) || 3306,
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
-    ssl: process.env.DB_SSL_MODE === 'REQUIRED' ? { rejectUnauthorized: true } : undefined,
+    ssl: buildSslConfig(),
 };
 
 const dbConfig = {
@@ -18,7 +26,7 @@ const dbConfig = {
     database: process.env.DB_NAME || 'raddigo',
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
-    ssl: process.env.DB_SSL_MODE === 'REQUIRED' ? { rejectUnauthorized: true } : undefined,
+    ssl: buildSslConfig(),
 };
 
 const pool = mysql.createPool(dbConfig as any);
