@@ -16,7 +16,7 @@ services:
       - CATEGORY_PORT=3003
       - ORDER_PORT=3004
     env_file:
-      - .env
+      - .env.production
     depends_on:
       auth-service:
         condition: service_healthy
@@ -72,7 +72,7 @@ services:
         max-size: "10m"
         max-file: "3"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3002/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -110,7 +110,7 @@ services:
         max-size: "10m"
         max-file: "3"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3003/health"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3003/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -147,6 +147,12 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3004/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
   
   # Redis (in-memory cache)
   redis:
@@ -158,11 +164,11 @@ services:
     networks:
       - raddigo-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3004/health"]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 40s
+      start_period: 10s
 
   # Nginx Load Balancer (Optional - for production scaling)
   nginx:
