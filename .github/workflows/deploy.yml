@@ -1,0 +1,25 @@
+name: Deploy Project to DigitalOcean
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to server via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            # change this path if your repo is cloned elsewhere on the droplet
+            cd /root/RaddiGo-MonoRepo-FYP-GCS-Lahore
+            git fetch --all --prune
+            git reset --hard origin/main
+            if [ -f docker-compose.prod.yml ]; then F=docker-compose.prod.yml; else F=docker-compose.yml; fi
+            docker compose -f "$F" up -d --build --remove-orphans
