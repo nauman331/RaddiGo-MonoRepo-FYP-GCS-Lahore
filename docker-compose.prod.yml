@@ -15,6 +15,9 @@ services:
       - REDIS_URL=${REDIS_URL:-redis://redis:6379}
       - CATEGORY_PORT=3003
       - ORDER_PORT=3004
+      - AUTH_HOST=auth-service
+      - CATEGORY_HOST=category-service
+      - ORDER_HOST=order-service
     env_file:
       - .env.production
     depends_on:
