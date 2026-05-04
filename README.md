@@ -1,4 +1,4 @@
-🚀 RaddiGo - Microservices Monorepo for Scrap Collection in Pakistan
+ RaddiGo - Microservices Monorepo for Scrap Collection in Pakistan
 # RaddiGo (Microservices)
 
 <div align="center">
@@ -17,7 +17,7 @@
 
 ---
 
-## 📖 Overview
+## Overview
 
 This repository is a monorepo of small backend microservices that together form the RaddiGo platform. The architecture has been refactored from a single monolith to a set of focused services (auth, categories, orders, gateway, sockets, and shared packages). Each service runs independently and communicates via HTTP and WebSockets where applicable.
 
@@ -25,7 +25,7 @@ This README documents the overall repo layout, how to run services locally, and 
 
 ---
 
-## 🔧 Services
+## Services
 
 - apps/gateway — API Gateway / reverse proxy and routing
 - apps/auth-service — Authentication, registration, verification
@@ -40,7 +40,7 @@ Each service contains its own `package.json`, `.env` expectations and scripts. T
 
 ---
 
-## 🏗 Architecture (microservices)
+## Architecture (microservices)
 
 ```
 Clients (Mobile / Web / Admin)
@@ -67,7 +67,7 @@ Notes:
 
 ---
 
-## 📦 Installation (local development)
+## Installation (local development)
 
 Prerequisites:
 - Bun v1.3.3 or higher
@@ -132,7 +132,7 @@ Tip: Use a process manager (tmux, iTerm panes, or a dev tool) to run multiple se
 
 ---
 
-## 🔐 Environment variables
+## Environment variables
 
 Each service exposes an `.env.example` in its folder. Common variables used across services include:
 
@@ -159,7 +159,7 @@ Check each service folder for more details.
 
 ---
 
-## 📚 API Documentation
+## API Documentation
 
 Each service documents its own endpoints in its folder (check `apps/<service>`). Example service base URLs when running locally (adjust ports in each service `.env`):
 
@@ -198,7 +198,7 @@ Refer to each service's controllers and route files for full API details. Key fi
 
 ---
 
-## 🔌 WebSocket & Real-time
+## WebSocket & Real-time
 
 Real-time chat and notifications are implemented in the `order-service` and shared socket controllers. Connect to the sockets using the service's WebSocket endpoint (see `apps/order-service/socket.ts` or `socketControllers`):
 
@@ -213,7 +213,7 @@ Event schemas are similar to the previous monolith; check `apps/order-service/so
 
 ---
 
-## 📁 Project Structure (top-level)
+## Project Structure (top-level)
 
 ```
 /apps
@@ -234,14 +234,14 @@ Open individual service folders to see service-specific source layout and `.env.
 
 ---
 
-## 🧪 Running Tests & Migrations
+## Running Tests & Migrations
 
 - Migrations are kept under `packages/config/mysqlMigrations` and service-level migrations may exist. Run migrations per service according to each service's scripts.
 - Tests (if present) are located per-service. Run `bun test` or the service-specific test script.
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 - Report issues via GitHub Issues
 - Open PRs against feature branches
@@ -251,13 +251,13 @@ When making changes across services, document cross-service contract changes (AP
 
 ---
 
-## 👥 Team
+## Team
 
 - **Nauman** - Lead Developer
 
 ---
 
-## 📄 License
+## License
 
 This project is part of a Final Year Project (FYP) for academic purposes.
 
