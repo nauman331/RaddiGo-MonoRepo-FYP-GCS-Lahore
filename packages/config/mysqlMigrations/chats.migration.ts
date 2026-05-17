@@ -1,7 +1,7 @@
-import mysql from "../../../apps/auth-service/sqldb";
+import pool from "../../db";
 
 export async function chatsMigration() {
-  await mysql`
+  await pool.execute(`
     CREATE TABLE IF NOT EXISTS chats (
       id INT AUTO_INCREMENT PRIMARY KEY,
       senderId INT NOT NULL,
@@ -12,5 +12,5 @@ export async function chatsMigration() {
       FOREIGN KEY (senderId) REFERENCES users(id) ON DELETE CASCADE,
       FOREIGN KEY (receiverId) REFERENCES users(id) ON DELETE CASCADE
     )
-  `;
+  `);
 }

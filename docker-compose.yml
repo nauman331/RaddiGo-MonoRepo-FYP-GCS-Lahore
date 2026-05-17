@@ -1,37 +1,17 @@
 services:
-  # Gateway Service
-  gateway:
-    build:
-      context: .
-      dockerfile: ./apps/gateway/Dockerfile
-      target: development
-    container_name: raddigo-gateway-dev
+  nginx:
+    image: nginx:stable-alpine
+    container_name: raddigo-nginx
     ports:
-      - "3001:3001"
+      - "80:80"
+      - "443:443"
     volumes:
-      - ./apps/gateway:/app/apps/gateway
-      - ./packages:/app/packages
-      - /app/node_modules
-    environment:
-      - NODE_ENV=development
-      - GATEWAY_PORT=3001
-      - AUTH_PORT=3002
-      - AUTH_HOST=auth-service
-      - CATEGORY_PORT=3003
-      - CATEGORY_HOST=category-service
-      - ORDER_PORT=3004
-      - ORDER_HOST=order-service
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
-      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
-    env_file:
-      - .env
-    depends_on:
-      - auth-service
-      - category-service
-      - order-service
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     networks:
       - raddigo-network
     restart: unless-stopped
+
+  # Gateway removed: nginx proxies directly to individual services
 
   # Auth Service
   auth-service:
@@ -40,8 +20,6 @@ services:
       dockerfile: ./apps/auth-service/Dockerfile
       target: development
     container_name: raddigo-auth-dev
-    ports:
-      - "3002:3002"
     volumes:
       - ./apps/auth-service:/app/apps/auth-service
       - ./packages:/app/packages
@@ -50,13 +28,13 @@ services:
       - NODE_ENV=development
       - AUTH_PORT=3002
       - AUTH_HOST=auth-service
-      - DB_HOST=${DB_HOST}
+      - DB_HOST=mysql
       - DB_PORT=${DB_PORT}
       - DB_NAME=${DB_NAME}
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_SSL_MODE=${DB_SSL_MODE}
-      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - REDIS_URL=redis://redis:6379
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
       - NODEMAILER_PASS=${NODEMAILER_PASS}
@@ -81,8 +59,6 @@ services:
       dockerfile: ./apps/category-service/Dockerfile
       target: development
     container_name: raddigo-category-dev
-    ports:
-      - "3003:3003"
     volumes:
       - ./apps/category-service:/app/apps/category-service
       - ./packages:/app/packages
@@ -90,13 +66,13 @@ services:
     environment:
       - NODE_ENV=development
       - CATEGORY_PORT=3003
-      - DB_HOST=${DB_HOST}
+      - DB_HOST=mysql
       - DB_PORT=${DB_PORT}
       - DB_NAME=${DB_NAME}
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_SSL_MODE=${DB_SSL_MODE}
-      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - REDIS_URL=redis://redis:6379
     env_file:
       - .env
     networks:
@@ -115,8 +91,6 @@ services:
       dockerfile: ./apps/order-service/Dockerfile
       target: development
     container_name: raddigo-order-dev
-    ports:
-      - "3004:3004"
     volumes:
       - ./apps/order-service:/app/apps/order-service
       - ./packages:/app/packages
@@ -124,13 +98,13 @@ services:
     environment:
       - NODE_ENV=development
       - ORDER_PORT=3004
-      - DB_HOST=${DB_HOST}
+      - DB_HOST=mysql
       - DB_PORT=${DB_PORT}
       - DB_NAME=${DB_NAME}
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_SSL_MODE=${DB_SSL_MODE}
-      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - REDIS_URL=redis://redis:6379
       - RADIUS_KM=${RADIUS_KM}
       - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}
       - FIREBASE_CLIENT_EMAIL=${FIREBASE_CLIENT_EMAIL}
@@ -151,10 +125,8 @@ services:
     container_name: raddigo-mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: yourpassword
-      MYSQL_DATABASE: raddigo
-    ports:
-      - "3306:3306"
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
@@ -165,8 +137,6 @@ services:
     image: redis:7-alpine
     container_name: raddigo-redis
     restart: unless-stopped
-    ports:
-      - "6379:6379"
     volumes:
       - redis_data:/data
     networks:

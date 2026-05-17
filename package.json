@@ -6,18 +6,18 @@
     "packages/*"
   ],
   "scripts": {
-    "dev:backend": "bun --filter './apps/*-service' dev & bun --filter gateway dev",
-    "start": "bun --cwd apps/gateway dev",
+    "dev:backend": "bun --filter './apps/*-service' dev",
+    "start": "docker compose -f docker-compose.yml up --build",
     "docker:dev": "docker-compose up --build",
     "docker:dev:detach": "docker-compose up --build -d",
     "docker:dev:logs": "docker-compose logs -f",
     "docker:dev:stop": "docker-compose down",
     "docker:dev:clean": "docker-compose down -v --rmi all",
-    "docker:prod": "docker-compose -f docker-compose.prod.yml up --build -d",
-    "docker:prod:stop": "docker-compose -f docker-compose.prod.yml down",
-    "docker:prod:logs": "docker-compose -f docker-compose.prod.yml logs -f",
+    "docker:prod": "docker-compose up --build -d",
+    "docker:prod:stop": "docker-compose down",
+    "docker:prod:logs": "docker-compose logs -f",
     "docker:build": "docker-compose build",
-    "docker:build:prod": "docker-compose -f docker-compose.prod.yml build",
+    "docker:build:prod": "docker-compose build",
     "docker:health": "docker ps --format 'table {{.Names}}\\t{{.Status}}\\t{{.Ports}}'",
     "docker:prune": "docker system prune -af && docker volume prune -f"
   },
@@ -29,6 +29,8 @@
     "ioredis": "^5.4.1"
   },
   "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/nodemailer": "^8.0.0",
     "bun-types": "^1.3.5"
   }
 }

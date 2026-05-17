@@ -28,18 +28,14 @@ This guide explains how to use Docker with your RaddiGo microservices monorepo.
 
 ### Production Environment
 
-1. **Create production environment file:**
-   ```bash
-   cp .env.production.example .env.production
-   # Edit .env.production with your production values
-   ```
+The repository now uses one compose file for both local and deployed runs.
 
-2. **Start in production mode:**
+1. **Start the stack in detached mode:**
    ```bash
    bun run docker:prod
    ```
 
-3. **Stop production services:**
+2. **Stop the stack:**
    ```bash
    bun run docker:prod:stop
    ```
@@ -48,32 +44,35 @@ This guide explains how to use Docker with your RaddiGo microservices monorepo.
 
 ### Services Overview
 
-- **Gateway Service** (Port 3001): API Gateway and load balancer
 - **Auth Service** (Port 3002): User authentication and authorization
 - **Category Service** (Port 3003): Category management
 - **Order Service** (Port 3004): Order management with WebSocket support
-- **Nginx** (Port 80/443): Production load balancer and reverse proxy
+- **Nginx** (Port 80/443): Public reverse proxy and edge layer
 
 ### Health Checks
 
-All services include health check endpoints:
-- Gateway: `http://localhost:3001/health`
-- Auth: `http://localhost:3002/health`
-- Category: `http://localhost:3003/health`
-- Order: `http://localhost:3004/health`
+All services include health check endpoints via nginx (public):
+- Nginx: `http://localhost/health`
+- Auth: `http://localhost/auth/health`
+- Category: `http://localhost/category/health`
+- Order: `http://localhost/order/health`
 
 ## 🛠 Available Scripts
 
-| Command | Description |
-|---------|-------------|
-| `bun run docker:dev` | Start development environment |
-| `bun run docker:dev:detach` | Start development in background |
-| `bun run docker:dev:logs` | View development logs |
+All services include health check endpoints (via nginx):
+- Auth: `http://localhost/auth/health`
+- Category: `http://localhost/category/health`
+- Order: `http://localhost/order/health`
 | `bun run docker:dev:stop` | Stop development environment |
 | `bun run docker:dev:clean` | Clean up (remove containers, volumes, images) |
 | `bun run docker:prod` | Start production environment |
 | `bun run docker:prod:stop` | Stop production environment |
-| `bun run docker:prod:logs` | View production logs |
+docker compose -f docker-compose.yml logs -f
+
+# Specific service (nginx, auth, category, order)
+docker compose -f docker-compose.yml logs -f nginx
+docker compose -f docker-compose.yml logs -f auth-service
+docker compose -f docker-compose.yml logs -f order-service
 | `bun run docker:build` | Build all images |
 | `bun run docker:build:prod` | Build production images |
 | `bun run docker:health` | Check container health |
@@ -82,33 +81,32 @@ All services include health check endpoints:
 ## 🏗 Development Features
 
 - **Hot Reload**: Changes to your code are automatically reflected
-- **Volume Mounting**: Source code is mounted for instant updates
-- **Shared Network**: All services can communicate with each other
-- **Environment Variables**: Loaded from `.env` file
-- **Health Monitoring**: Built-in health checks for all services
+curl http://localhost/health
+curl http://localhost/auth/health
+curl http://localhost/category/health
+curl http://localhost/order/health
 
 ## 🚀 Production Features
 
-- **Multi-stage Builds**: Optimized production images
-- **Resource Limits**: CPU and memory constraints
-- **Health Checks**: Robust health monitoring
-- **Logging**: Structured logging with rotation
+   ```bash
+   docker exec -it raddigo-auth-dev /bin/sh
+   ```
 - **Security**: Non-root users and security headers
-- **Load Balancing**: Nginx reverse proxy
-- **SSL Ready**: HTTPS configuration template included
-
-## 📊 Monitoring
+- **Load Balancing**: Nginx reverse proxy remains available
+   ```bash
+   docker logs raddigo-nginx -f
+   ```
 
 ### Check Service Health
 ```bash
 # Check all container status
 bun run docker:health
 
-# Check specific service health
-curl http://localhost:3001/health
-curl http://localhost:3002/health
-curl http://localhost:3003/health
-curl http://localhost:3004/health
+# Check specific service health (via nginx)
+curl http://localhost/health
+curl http://localhost/auth/health
+curl http://localhost/category/health
+curl http://localhost/order/health
 ```
 
 ### View Logs
@@ -117,7 +115,7 @@ curl http://localhost:3004/health
 docker-compose logs -f
 
 # Specific service
-docker-compose logs -f gateway
+docker-compose logs -f nginx
 docker-compose logs -f auth-service
 ```
 
@@ -127,7 +125,7 @@ docker-compose logs -f auth-service
 docker stats
 
 # View detailed container info
-docker inspect raddigo-gateway-dev
+docker inspect raddigo-auth-dev
 ```
 
 ## 🔧 Troubleshooting
@@ -165,12 +163,12 @@ docker inspect raddigo-gateway-dev
 
 1. **Enter a running container:**
    ```bash
-   docker exec -it raddigo-gateway-dev /bin/sh
+   docker exec -it raddigo-auth-dev /bin/sh
    ```
 
 2. **Check container logs:**
    ```bash
-   docker logs raddigo-gateway-dev -f
+   docker logs raddigo-nginx -f
    ```
 
 3. **Inspect network:**
@@ -191,18 +189,18 @@ docker inspect raddigo-gateway-dev
 - SSL/HTTPS configuration available
 - Rate limiting and security headers configured
 
-## 📈 Scaling
-
-### Horizontal Scaling
-```bash
+**Enter a running container:**
+    ```bash
+    docker exec -it raddigo-auth-dev /bin/sh
+    ```
 # Scale specific services
-docker-compose up --scale auth-service=3 --scale category-service=2
-
-# Load balancing handled by Nginx in production
-```
+**Check container logs:**
+    ```bash
+    docker logs raddigo-nginx -f
+    ```
 
 ### Vertical Scaling
-Edit resource limits in `docker-compose.prod.yml`:
+Edit resource limits in `docker-compose.yml`:
 ```yaml
 deploy:
   resources:
@@ -221,8 +219,8 @@ bun run docker:prod
 
 ### Cloud Deployment
 1. Push images to container registry
-2. Use `docker-compose.prod.yml` as base for orchestration
-3. Configure external load balancer
+2. Use `docker-compose.yml` as the single orchestration file
+3. Configure external load balancer if needed
 4. Set up monitoring and logging
 
 ---

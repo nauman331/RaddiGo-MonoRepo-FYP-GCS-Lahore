@@ -31,6 +31,5 @@ jobs:
             # 3. Clean up the URL so the token isn't left lying around on your server
             git remote set-url origin https://github.com/${{ github.repository }}.git
             
-            # 4. Deploy using the correct compose file
-            if [ -f docker-compose.prod.yml ]; then F=docker-compose.prod.yml; else F=docker-compose.yml; fi
-            docker compose -f "$F" up -d --build --remove-orphans
+            # 4. Deploy using the single compose file used everywhere else
+            docker compose -f docker-compose.yml up -d --build --remove-orphans

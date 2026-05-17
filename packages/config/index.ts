@@ -17,7 +17,7 @@ export const DB_CONFIG = {
     REDIS_URL: String(process.env.REDIS_URL)
 };
 
-export const API_URL = `http://localhost:${PORTS.GATEWAY}`;
+export const API_URL = `http://localhost`;
 
 import { connectDB as connectSharedDB } from '../db/index';
 import { connectRedis as connectSharedRedis } from '../db/redis';

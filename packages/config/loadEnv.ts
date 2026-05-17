@@ -22,7 +22,8 @@ function loadEnvFromRoot() {
         });
     } catch (err) {
         // non-fatal; services should still run if env isn't present
-        console.warn('loadEnv: could not load .env from repo root', err?.message || err);
+        const error = err as Error;
+        console.warn('loadEnv: could not load .env from repo root', error.message || err);
     }
 }
 

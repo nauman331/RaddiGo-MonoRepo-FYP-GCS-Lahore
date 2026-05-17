@@ -19,7 +19,7 @@
 
 ## Overview
 
-This repository is a monorepo of small backend microservices that together form the RaddiGo platform. The architecture has been refactored from a single monolith to a set of focused services (auth, categories, orders, gateway, sockets, and shared packages). Each service runs independently and communicates via HTTP and WebSockets where applicable.
+This repository is a monorepo of small backend microservices that together form the RaddiGo platform. The architecture has been refactored from a single monolith to a set of focused services (auth, categories, orders, sockets, and shared packages) with an edge reverse-proxy (nginx) for public routing. Each service runs independently and communicates via HTTP and WebSockets where applicable.
 
 This README documents the overall repo layout, how to run services locally, and where to find each service's API documentation.
 
@@ -27,7 +27,6 @@ This README documents the overall repo layout, how to run services locally, and 
 
 ## Services
 
-- apps/gateway — API Gateway / reverse proxy and routing
 - apps/auth-service — Authentication, registration, verification
 - apps/category-service — Category and pricing management
 - apps/order-service — Postings, orders, rides, sockets (real-time)
@@ -46,7 +45,7 @@ Each service contains its own `package.json`, `.env` expectations and scripts. T
 Clients (Mobile / Web / Admin)
         |
         ▼
-   API Gateway (apps/gateway)
+      Nginx (edge)
         |
   ┌─────┴────────┐
   │              │
@@ -115,11 +114,8 @@ docker run -d -p 3306:3306 -e MYSQL_ROOT_PASSWORD=pass mysql:8
 Start services individually (example):
 
 ```bash
-# API Gateway
-cd apps/gateway && bun run dev
-
 # Auth service
-cd ../auth-service && bun run dev
+cd apps/auth-service && bun run dev
 
 # Category service
 cd ../category-service && bun run dev
@@ -161,12 +157,12 @@ Check each service folder for more details.
 
 ## API Documentation
 
-Each service documents its own endpoints in its folder (check `apps/<service>`). Example service base URLs when running locally (adjust ports in each service `.env`):
+Each service documents its own endpoints in its folder (check `apps/<service>`). Example service base URLs when running locally behind nginx (nginx is the public entry):
 
-- Gateway: http://localhost:3000
-- Auth Service: http://localhost:3001
-- Category Service: http://localhost:3002
-- Order Service: http://localhost:3003
+- Nginx (public): http://localhost
+- Auth Service (internal): http://auth-service:3002
+- Category Service (internal): http://category-service:3003
+- Order Service (internal): http://order-service:3004
 
 Example: Register (Auth service)
 
@@ -205,8 +201,8 @@ Real-time chat and notifications are implemented in the `order-service` and shar
 Client examples:
 
 ```javascript
-const chatSocket = new WebSocket('ws://localhost:3003/ws/chat');
-const notifSocket = new WebSocket('ws://localhost:3003/ws/notifications');
+const chatSocket = new WebSocket('ws://localhost/order/ws');
+const notifSocket = new WebSocket('ws://localhost/order/ws');
 ```
 
 Event schemas are similar to the previous monolith; check `apps/order-service/socketControllers` for server-side handlers.
@@ -219,7 +215,6 @@ Event schemas are similar to the previous monolith; check `apps/order-service/so
 /apps
   /auth-service
   /category-service
-  /gateway
   /order-service
   /ThirdPartyservices
 /packages

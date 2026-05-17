@@ -61,7 +61,7 @@ export const on = (event: string, handler: (data: any) => void) => {
     if (!eventHandlers.has(event)) {
         eventHandlers.set(event, new Set());
     }
-    eventHandlers.get(event).add(handler);
+    eventHandlers.get(event)!.add(handler);
 };
 
 const broadcast = (event: string, data: any) => {
@@ -81,7 +81,7 @@ export const joinRoom = (socketId: string, room: string) => {
         if (!rooms.has(room)) {
             rooms.set(room, new Set());
         }
-        rooms.get(room).add(socketId);
+        rooms.get(room)!.add(socketId);
     }
 };
 
