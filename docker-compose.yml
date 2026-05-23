@@ -11,8 +11,6 @@ services:
       - raddigo-network
     restart: unless-stopped
 
-  # Gateway removed: nginx proxies directly to individual services
-
   # Auth Service
   auth-service:
     build:
@@ -20,6 +18,8 @@ services:
       dockerfile: ./apps/auth-service/Dockerfile
       target: development
     container_name: raddigo-auth-dev
+    ports:
+      - "3002:3002"
     volumes:
       - ./apps/auth-service:/app/apps/auth-service
       - ./packages:/app/packages
@@ -59,6 +59,8 @@ services:
       dockerfile: ./apps/category-service/Dockerfile
       target: development
     container_name: raddigo-category-dev
+    ports:
+      - "3003:3003"
     volumes:
       - ./apps/category-service:/app/apps/category-service
       - ./packages:/app/packages
@@ -91,6 +93,8 @@ services:
       dockerfile: ./apps/order-service/Dockerfile
       target: development
     container_name: raddigo-order-dev
+    ports:
+      - "3004:3004"
     volumes:
       - ./apps/order-service:/app/apps/order-service
       - ./packages:/app/packages
@@ -119,6 +123,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+
   # MySQL Database
   mysql:
     image: mysql:8.0
