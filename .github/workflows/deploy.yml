@@ -19,8 +19,8 @@ jobs:
             sudo bash <<'EOF'
             set -e
             
-            # Navigate to the project directory
-            cd /root/RaddiGo-MonoRepo-FYP-GCS-Lahore
+            # Navigate to the CORRECT project directory
+            cd /home/ubuntu/RaddiGo-MonoRepo-FYP-GCS-Lahore
             
             # 1. Temporarily use the secure GitHub Action context token to authenticate
             git remote set-url origin https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git
