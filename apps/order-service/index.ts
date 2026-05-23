@@ -8,20 +8,21 @@ await connectRedis();
 const server = Bun.serve({
     port: PORTS.ORDER,
     hostname: "0.0.0.0",
-    fetch(req, server) {
+   fetch(req, server) {
         const url = new URL(req.url);
 
         // 1. Explicitly handle the WebSocket upgrade path FIRST
         if (url.pathname === '/order/ws' || url.pathname === '/ws') {
-            const success = server.upgrade(req);
+            // THE FIX: Pass a data object with a unique ID into the upgrade function
+            const success = server.upgrade(req, {
+                data: {
+                    id: Math.random().toString(36).substring(2, 15) // Generates a random socket ID
+                }
+            });
             
-            // If the upgrade is successful, we MUST return undefined immediately 
-            // so Bun takes over the socket connection.
             if (success) {
                 return undefined;
             }
-            
-            // If the upgrade fails for some reason, return a 400 Bad Request
             return new Response("WebSocket upgrade failed", { status: 400 });
         }
 
@@ -33,7 +34,6 @@ const server = Bun.serve({
             });
         }
         
-        // 3. Fallback for any unmatched routes
         return new Response('Not Found', { status: 404 });
     },
     websocket: getWebSocketConfig(),
