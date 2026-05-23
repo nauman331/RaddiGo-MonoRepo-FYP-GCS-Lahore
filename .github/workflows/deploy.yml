@@ -16,23 +16,22 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # Run the entire block as root so the 'ubuntu' user can access the /root directory
-            sudo bash -c '
-              set -e
-              
-              # Navigate to the project directory
-              cd /root/RaddiGo-MonoRepo-FYP-GCS-Lahore
-              
-              # 1. Temporarily use the secure GitHub Action context token to authenticate
-              git remote set-url origin https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git
-              
-              # 2. Fetch and pull the code (this bypasses the password prompt)
-              git fetch --all --prune
-              git reset --hard origin/main
-              
-              # 3. Clean up the URL so the token isn't left lying around on your server
-              git remote set-url origin https://github.com/${{ github.repository }}.git
-              
-              # 4. Deploy using the single compose file
-              docker compose -f docker-compose.yml up -d --build --remove-orphans
-            '
+            sudo bash <<'EOF'
+            set -e
+            
+            # Navigate to the project directory
+            cd /root/RaddiGo-MonoRepo-FYP-GCS-Lahore
+            
+            # 1. Temporarily use the secure GitHub Action context token to authenticate
+            git remote set-url origin https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git
+            
+            # 2. Fetch and pull the code (this bypasses the password prompt)
+            git fetch --all --prune
+            git reset --hard origin/main
+            
+            # 3. Clean up the URL so the token isn't left lying around on your server
+            git remote set-url origin https://github.com/${{ github.repository }}.git
+            
+            # 4. Deploy using the single compose file
+            docker compose -f docker-compose.yml up -d --build --remove-orphans
+            EOF
