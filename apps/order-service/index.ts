@@ -7,22 +7,29 @@ await connectRedis();
 
 const server = Bun.serve({
     port: PORTS.ORDER,
-    fetch: (req: Request) => {
-        const upgradeHeader = req.headers.get('upgrade');
-        if (upgradeHeader && upgradeHeader.toLowerCase() === 'websocket') {
-            return;
+    fetch(req, server) { 
+        const url = new URL(req.url);
+
+        if (url.pathname === '/order/ws' || url.pathname === '/ws') {
+            const success = server.upgrade(req);
+            if (success) {
+                return undefined;
+            }
+            return new Response("WebSocket upgrade failed", { status: 400 });
         }
 
-        const url = new URL(req.url);
-        if (url.pathname === '/' || url.pathname === '/health') {
-            return new Response(JSON.stringify({ status: 'ok' }), { status: 200, headers: { 'content-type': 'application/json' } });
+        if (url.pathname === '/' || url.pathname === '/health' || url.pathname === '/order/health') {
+            return new Response(JSON.stringify({ status: 'ok' }), { 
+                status: 200, 
+                headers: { 'content-type': 'application/json' } 
+            });
         }
+        
         return new Response('Not Found', { status: 404 });
     },
     websocket: getWebSocketConfig(),
-} as any);
+});
 
-// Initialize all socket controllers before starting the server
 setupAllSocketControllers();
 
 console.log(`Order service running on ${server.hostname}:${server.port}`);
