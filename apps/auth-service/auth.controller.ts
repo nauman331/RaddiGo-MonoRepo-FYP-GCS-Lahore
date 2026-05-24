@@ -4,13 +4,27 @@ import type { RowDataPacket } from "mysql2";
 import { sendPasswordResetEmail } from "../utils/mailsender";
 import { signToken } from "../utils/jwttoken";
 
+// Utility to safely parse JSON without crashing the route
+const safeParseJSON = async <T>(req: Request): Promise<T | null> => {
+    try {
+        return await req.json() as T;
+    } catch (error) {
+        return null;
+    }
+}
+
 const generateOTP = (): string => {
     return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
 const register = async (req: Request): Promise<Response> => {
     try {
-        const { username, password, email, phone } = await req.json() as IUser;
+        const body = await safeParseJSON<IUser>(req);
+        if (!body) {
+            return Response.json({ message: 'Invalid or missing JSON payload' }, { status: 400 });
+        }
+
+        const { username, password, email, phone } = body;
         if (!username || !password || !email || !phone) {
             return Response.json({ message: 'Missing required fields' }, { status: 400 });
         }
@@ -47,13 +61,20 @@ const register = async (req: Request): Promise<Response> => {
         return Response.json({ message: 'Register successful. Please check your email for OTP' }, { status: 200 });
     } catch (error) {
         console.error('Register error:', error);
-        return Response.json({ message: 'Register failed' }, { status: 500 });
+        // Extract the actual error message dynamically
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        return Response.json({ message: 'Register failed', error: errorMessage }, { status: 500 });
     }
 }
 
 const verifyEmail = async (req: Request): Promise<Response> => {
     try {
-        const { email, otp } = await req.json() as IUser & { otp: string };
+        const body = await safeParseJSON<IUser & { otp: string }>(req);
+        if (!body) {
+            return Response.json({ message: 'Invalid or missing JSON payload' }, { status: 400 });
+        }
+
+        const { email, otp } = body;
         if (!email || !otp) {
             return Response.json({ message: 'Missing required fields' }, { status: 400 });
         }
@@ -84,13 +105,20 @@ const verifyEmail = async (req: Request): Promise<Response> => {
 
         return Response.json({ message: 'Email verified successfully' }, { status: 200 });
     } catch (error) {
-        return Response.json({ message: 'Email verification failed' }, { status: 500 });
+        console.error('Verify Email error:', error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        return Response.json({ message: 'Email verification failed', error: errorMessage }, { status: 500 });
     }
 }
 
 const login = async (req: Request): Promise<Response> => {
     try {
-        const { email, password } = await req.json() as IUser;
+        const body = await safeParseJSON<IUser>(req);
+        if (!body) {
+            return Response.json({ message: 'Invalid or missing JSON payload' }, { status: 400 });
+        }
+
+        const { email, password } = body;
         if (!email || !password) {
             return Response.json({ message: 'Missing required fields' }, { status: 400 });
         }
@@ -117,13 +145,19 @@ const login = async (req: Request): Promise<Response> => {
         return Response.json({ token, userId: user2.id, role: user2.role, isOk: true }, { status: 200 });
     } catch (error) {
         console.error('Login error:', error);
-        return Response.json({ message: 'Login failed' }, { status: 500 });
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        return Response.json({ message: 'Login failed', error: errorMessage }, { status: 500 });
     }
 }
 
 const resendVerificationEmail = async (req: Request): Promise<Response> => {
     try {
-        const { email } = await req.json() as IUser;
+        const body = await safeParseJSON<IUser>(req);
+        if (!body) {
+            return Response.json({ message: 'Invalid or missing JSON payload' }, { status: 400 });
+        }
+
+        const { email } = body;
         if (!email) {
             return Response.json({ message: 'Missing required fields' }, { status: 400 });
         }
@@ -149,7 +183,9 @@ const resendVerificationEmail = async (req: Request): Promise<Response> => {
         await sendPasswordResetEmail(email, otp);
         return Response.json({ message: 'Verification OTP resent successfully' }, { status: 200 });
     } catch (error) {
-        return Response.json({ message: 'Resending verification OTP failed' }, { status: 500 });
+        console.error('Resend OTP error:', error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        return Response.json({ message: 'Resending verification OTP failed', error: errorMessage }, { status: 500 });
     }
 }
 
@@ -186,7 +222,9 @@ const getMe = async (req: Request): Promise<Response> => {
         await redis.set(`user:${user.userId}`, JSON.stringify(userData));
         return Response.json({ user: userData }, { status: 200 });
     } catch (error) {
-        return Response.json({ message: 'Failed to fetch user data' }, { status: 500 });
+        console.error('getMe error:', error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        return Response.json({ message: 'Failed to fetch user data', error: errorMessage }, { status: 500 });
     }
 }
 
@@ -205,13 +243,20 @@ const deleteMe = async (req: Request): Promise<Response> => {
         await redis.del(`user:${user.userId}`);
         return Response.json({ message: 'User deleted successfully' }, { status: 200 });
     } catch (error) {
-        return Response.json({ message: 'Failed to delete user' }, { status: 500 });
+        console.error('deleteMe error:', error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        return Response.json({ message: 'Failed to delete user', error: errorMessage }, { status: 500 });
     }
 }
 
 const resetPassword = async (req: Request): Promise<Response> => {
     try {
-        const { email, password, otp } = await req.json() as IUser & { otp: string };
+        const body = await safeParseJSON<IUser & { otp: string }>(req);
+        if (!body) {
+            return Response.json({ message: 'Invalid or missing JSON payload' }, { status: 400 });
+        }
+
+        const { email, password, otp } = body;
         if (!email || !password || !otp) {
             return Response.json({ message: 'Missing required fields' }, { status: 400 });
         }
@@ -239,7 +284,9 @@ const resetPassword = async (req: Request): Promise<Response> => {
         return Response.json({ message: 'Password reset successfully' }, { status: 200 });
 
     } catch (error) {
-        return Response.json({ message: 'Failed to reset password' }, { status: 500 });
+        console.error('Reset Password error:', error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        return Response.json({ message: 'Failed to reset password', error: errorMessage }, { status: 500 });
     }
 }
 
@@ -247,7 +294,8 @@ const doGoogleLogin = async (req: Request): Promise<Response> => {
     try {
         return Response.json({ message: 'Google login not implemented yet' }, { status: 501 });
     } catch (error) {
-        return Response.json({ message: 'Google login failed' }, { status: 500 });
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        return Response.json({ message: 'Google login failed', error: errorMessage }, { status: 500 });
     }
 }
 
