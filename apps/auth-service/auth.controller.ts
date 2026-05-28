@@ -28,9 +28,9 @@ const register = async (req: Request): Promise<Response> => {
         if (!username || !password || !email || !phone) {
             return Response.json({ message: 'Missing required fields' }, { status: 400 });
         }
-        if(role !== "customer" || role !== "collector"){
-            return Response.json({ message: 'Role is not Correct' }, { status: 401 });
-        }
+if (!["customer", "collector"].includes(role)) {
+    return Response.json({ message: 'Role is not Correct' }, { status: 401 });
+}
 
         const [existingEmailRows] = await pool.query<RowDataPacket[]>(
             "SELECT * FROM users WHERE email = ?",
