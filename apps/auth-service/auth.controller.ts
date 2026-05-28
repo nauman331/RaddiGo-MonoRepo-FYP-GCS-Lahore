@@ -24,9 +24,12 @@ const register = async (req: Request): Promise<Response> => {
             return Response.json({ message: 'Invalid or missing JSON payload' }, { status: 400 });
         }
 
-        const { username, password, email, phone } = body;
+        const { username, password, email, phone, role } = body;
         if (!username || !password || !email || !phone) {
             return Response.json({ message: 'Missing required fields' }, { status: 400 });
+        }
+        if(role !== "customer" || role !== "collector"){
+            return Response.json({ message: 'Role is not Correct' }, { status: 401 });
         }
 
         const [existingEmailRows] = await pool.query<RowDataPacket[]>(
@@ -49,19 +52,18 @@ const register = async (req: Request): Promise<Response> => {
 
         const hashedPassword = await Bun.password.hash(password, "bcrypt");
         const otp = generateOTP();
-        const otpExpiry = new Date(Date.now() + 15 * 60000); // 15 minutes
+        const otpExpiry = new Date(Date.now() + 15 * 60000); 
 
         await sendPasswordResetEmail(email, otp);
 
         await pool.execute(
             "INSERT INTO users (username, email, password, phone, role, isVerified, otp, otpExpiry) VALUES (?, ?, ?, ?, 'customer', false, ?, ?)",
-            [username, email, hashedPassword, phone, otp, otpExpiry]
+            [username, email, hashedPassword, phone, role, otp, otpExpiry]
         );
 
         return Response.json({ message: 'Register successful. Please check your email for OTP' }, { status: 200 });
     } catch (error) {
         console.error('Register error:', error);
-        // Extract the actual error message dynamically
         const errorMessage = error instanceof Error ? error.message : String(error);
         return Response.json({ message: 'Register failed', error: errorMessage }, { status: 500 });
     }
