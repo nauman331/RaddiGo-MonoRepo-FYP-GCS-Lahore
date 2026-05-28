@@ -56,10 +56,10 @@ if (!["customer", "collector"].includes(role)) {
 
         await sendPasswordResetEmail(email, otp);
 
-        await pool.execute(
-            "INSERT INTO users (username, email, password, phone, role, isVerified, otp, otpExpiry) VALUES (?, ?, ?, ?, 'customer', false, ?, ?)",
-            [username, email, hashedPassword, phone, role, otp, otpExpiry]
-        );
+await pool.execute(
+    "INSERT INTO users (username, email, password, phone, role, isVerified, otp, otpExpiry) VALUES (?, ?, ?, ?, ?, false, ?, ?)",
+    [username, email, hashedPassword, phone, role, otp, otpExpiry]
+);
 
         return Response.json({ message: 'Register successful. Please check your email for OTP' }, { status: 200 });
     } catch (error) {
