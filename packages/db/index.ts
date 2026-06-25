@@ -3,6 +3,7 @@ import '../config/loadEnv';
 import { userMigration } from './migrations/user.migration';
 import { categoriesMigration } from './migrations/categories.migration';
 import { ordersMigration } from './migrations/orders.migration';
+import { walletMigration } from './migrations/wallet.migration';
 
 const parseBool = (v?: string) => (v === 'true' ? true : v === 'false' ? false : undefined);
 
@@ -36,6 +37,7 @@ async function runMigrations(poolInstance: any) {
     await userMigration(poolInstance);
     await categoriesMigration(poolInstance);
     await ordersMigration(poolInstance);
+    await walletMigration(poolInstance)
 }
 
 export async function connectDB(retries = 10, delay = 3000) {
