@@ -298,6 +298,76 @@ const resetPassword = async (req: Request): Promise<Response> => {
     }
 }
 
+export const updateProfile = async (req: Request): Promise<Response> => {
+    try {
+        const user = (req as any).user;
+        if (!user) return Response.json({ message: 'Unauthorized' }, { status: 401 });
+
+        const body = await safeParseJSON<{
+            username?: string;
+            phone?: string;
+            address?: string;
+            profilePicture?: string;   // base64 or URL after upload
+        }>(req);
+
+        if (!body) return Response.json({ message: 'Invalid JSON' }, { status: 400 });
+
+        // Build dynamic SET clause
+        const fields: string[] = [];
+        const values: any[] = [];
+
+        if (body.username) {
+            fields.push('username = ?');
+            values.push(body.username);
+        }
+        if (body.phone) {
+            // Optional: check phone uniqueness
+            const [existingPhone] = await pool.query<RowDataPacket[]>(
+                "SELECT id FROM users WHERE phone = ? AND id != ?",
+                [body.phone, user.userId]
+            );
+            if (existingPhone.length) {
+                return Response.json({ message: 'Phone number already in use' }, { status: 400 });
+            }
+            fields.push('phone = ?');
+            values.push(body.phone);
+        }
+        if (body.address !== undefined) {
+            fields.push('address = ?');
+            values.push(body.address);
+        }
+        if (body.profilePicture) {
+            fields.push('profilePicture = ?');
+            values.push(body.profilePicture);
+        }
+
+        if (fields.length === 0) {
+            return Response.json({ message: 'No fields to update' }, { status: 400 });
+        }
+
+        values.push(user.userId);
+        await pool.execute(
+            `UPDATE users SET ${fields.join(', ')} WHERE id = ?`,
+            values
+        );
+
+        // Invalidate Redis cache
+        await redis.del(`user:${user.userId}`);
+
+        // Fetch updated user
+        const [updatedRows] = await pool.query<RowDataPacket[]>(
+            "SELECT * FROM users WHERE id = ?",
+            [user.userId]
+        );
+        const updatedUser = (updatedRows as any)[0];
+
+        return Response.json({ message: 'Profile updated', user: updatedUser }, { status: 200 });
+    } catch (error) {
+        console.error('updateProfile error:', error);
+        return Response.json({ message: 'Profile update failed' }, { status: 500 });
+    }
+};
+
 const doGoogleLogin = async (req: Request): Promise<Response> => {
     try {
         return Response.json({ message: 'Google login not implemented yet' }, { status: 501 });
@@ -307,4 +377,4 @@ const doGoogleLogin = async (req: Request): Promise<Response> => {
     }
 }
 
-export { register, login, verifyEmail, resendVerificationEmail, getMe, deleteMe, resetPassword, doGoogleLogin };
+export { register, login, verifyEmail, resendVerificationEmail, getMe, deleteMe, resetPassword, doGoogleLogin, updateProfile };
