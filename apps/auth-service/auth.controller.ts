@@ -298,7 +298,7 @@ const resetPassword = async (req: Request): Promise<Response> => {
     }
 }
 
-export const updateProfile = async (req: Request): Promise<Response> => {
+const updateProfile = async (req: Request): Promise<Response> => {
     try {
         const user = (req as any).user;
         if (!user) return Response.json({ message: 'Unauthorized' }, { status: 401 });
