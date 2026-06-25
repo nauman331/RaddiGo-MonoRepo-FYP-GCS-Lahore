@@ -124,6 +124,42 @@ services:
       timeout: 10s
       retries: 3
 
+        # Admin Service
+  admin-service:
+    build:
+      context: .
+      dockerfile: ./apps/admin-service/Dockerfile
+      target: development
+    container_name: raddigo-admin-dev
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./apps/admin-service:/app/apps/admin-service
+      - ./packages:/app/packages
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - ADMIN_PORT=8000
+      - DB_HOST=mysql
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_SSL_MODE=${DB_SSL_MODE}
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
+    env_file:
+      - .env
+    networks:
+      - raddigo-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   # MySQL Database
   mysql:
     image: mysql:8.0

@@ -4,7 +4,6 @@ import type { RowDataPacket } from "mysql2";
 import { sendPasswordResetEmail } from "../utils/mailsender";
 import { signToken } from "../utils/jwttoken";
 
-// Utility to safely parse JSON without crashing the route
 const safeParseJSON = async <T>(req: Request): Promise<T | null> => {
     try {
         return await req.json() as T;
@@ -60,6 +59,13 @@ await pool.execute(
     "INSERT INTO users (username, email, password, phone, role, isVerified, otp, otpExpiry) VALUES (?, ?, ?, ?, ?, false, ?, ?)",
     [username, email, hashedPassword, phone, role, otp, otpExpiry]
 );
+const [newUser] = await pool.query<RowDataPacket[]>(
+  "SELECT id FROM users WHERE email = ?",
+  [email]
+);
+const userId = (newUser[0] as any).id;
+
+await pool.execute("INSERT INTO wallets (user_id) VALUES (?)", [userId]);
 
         return Response.json({ message: 'Register successful. Please check your email for OTP' }, { status: 200 });
     } catch (error) {
