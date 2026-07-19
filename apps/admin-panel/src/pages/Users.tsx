@@ -1,65 +1,104 @@
 import React, { useEffect, useState } from 'react';
-import { getAllWallets, getUserWallet } from '../api/wallets';
+import { getUsers, updateUser, toggleUserStatus, deleteUser } from '../api/users';
+import { useToast } from '../components/ui/Toast';
 import Modal from '../components/ui/Modal';
-import type { IWallet, IWalletDetail, ITransaction } from '../types';
-
-const fmt = (v: string | number) =>
-  `₨${parseFloat(String(v)).toLocaleString('en-PK', { minimumFractionDigits: 2 })}`;
+import type { IUser } from '../types';
+import { Search, Edit, Trash2, ShieldBan, ShieldCheck } from 'lucide-react';
 
 const Users: React.FC = () => {
-  const [wallets, setWallets] = useState<IWallet[]>([]);
-  const [filtered, setFiltered] = useState<IWallet[]>([]);
+  const { showToast } = useToast();
+  const [users, setUsers] = useState<IUser[]>([]);
+  const [filtered, setFiltered] = useState<IUser[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
 
-  // Detail modal
-  const [selected, setSelected] = useState<IWallet | null>(null);
-  const [detail, setDetail] = useState<{ wallet: IWalletDetail; transactions: ITransaction[] } | null>(null);
-  const [detailLoading, setDetailLoading] = useState(false);
+  // Edit modal
+  const [editUser, setEditUser] = useState<IUser | null>(null);
+  const [editForm, setEditForm] = useState({ username: '', phone: '', role: '' });
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Delete modal
+  const [deleteTarget, setDeleteTarget] = useState<IUser | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const loadUsers = async () => {
+    try {
+      const data = await getUsers();
+      setUsers(data);
+      setFiltered(data);
+    } catch (err) {
+      showToast('Failed to load users', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    getAllWallets()
-      .then((data) => { setWallets(data); setFiltered(data); })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    loadUsers();
   }, []);
 
   useEffect(() => {
     const q = search.toLowerCase();
     setFiltered(
-      wallets.filter(
-        (w) =>
-          w.username?.toLowerCase().includes(q) ||
-          w.email?.toLowerCase().includes(q) ||
-          w.phone?.toLowerCase().includes(q)
+      users.filter(
+        (u) =>
+          u.username?.toLowerCase().includes(q) ||
+          u.email?.toLowerCase().includes(q) ||
+          u.phone?.toLowerCase().includes(q)
       )
     );
-  }, [search, wallets]);
+  }, [search, users]);
 
-  const openDetail = async (w: IWallet) => {
-    setSelected(w);
-    setDetailLoading(true);
+  const handleToggleStatus = async (user: IUser) => {
     try {
-      const d = await getUserWallet(w.user_id);
-      setDetail(d);
-    } catch {
-      setDetail(null);
-    } finally {
-      setDetailLoading(false);
+      await toggleUserStatus(user.id, !user.isVerified);
+      showToast(`User ${user.username} has been ${!user.isVerified ? 'activated' : 'deactivated'}`, 'success');
+      loadUsers();
+    } catch (err: any) {
+      showToast(err?.response?.data?.message || 'Failed to toggle status', 'error');
     }
   };
 
-  const closeModal = () => { setSelected(null); setDetail(null); };
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editUser) return;
+    setIsSaving(true);
+    try {
+      await updateUser(editUser.id, editForm);
+      showToast('User updated successfully', 'success');
+      setEditUser(null);
+      loadUsers();
+    } catch (err: any) {
+      showToast(err?.response?.data?.message || 'Failed to update user', 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    try {
+      await deleteUser(deleteTarget.id);
+      showToast('User deleted successfully', 'success');
+      setDeleteTarget(null);
+      loadUsers();
+    } catch (err: any) {
+      showToast(err?.response?.data?.message || 'Failed to delete user', 'error');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <div className="page-wrapper">
       <div className="page-header">
         <div>
           <h2 className="page-title">Users</h2>
-          <p className="page-subtitle">{wallets.length} registered users on the platform</p>
+          <p className="page-subtitle">{users.length} registered users on the platform</p>
         </div>
         <div className="search-bar">
-          <span className="search-icon">🔍</span>
+          <span className="search-icon"><Search size={18} /></span>
           <input
             id="users-search"
             className="input"
@@ -81,10 +120,10 @@ const Users: React.FC = () => {
                   <th>#</th>
                   <th>User</th>
                   <th>Email</th>
-                  <th>Phone</th>
-                  <th>Balance</th>
-                  <th>Last Updated</th>
-                  <th>Action</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Joined</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -93,43 +132,69 @@ const Users: React.FC = () => {
                     No users found
                   </td></tr>
                 ) : (
-                  filtered.map((w, i) => (
-                    <tr key={w.user_id}>
-                      <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{i + 1}</td>
+                  filtered.map((u, i) => (
+                    <tr key={u.id}>
+                      <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{u.id}</td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                           <div style={{
                             width: 34, height: 34, borderRadius: '50%',
-                            background: `hsl(${(w.user_id * 47) % 360}, 55%, 40%)`,
+                            background: `hsl(${(u.id * 47) % 360}, 55%, 40%)`,
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             fontWeight: 700, fontSize: '0.85rem', color: '#fff', flexShrink: 0,
                           }}>
-                            {w.username?.charAt(0).toUpperCase() || '?'}
+                            {u.username?.charAt(0).toUpperCase() || '?'}
                           </div>
-                          <span style={{ fontWeight: 600 }}>{w.username}</span>
+                          <div>
+                            <span style={{ fontWeight: 600, display: 'block' }}>{u.username}</span>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>{u.phone}</span>
+                          </div>
                         </div>
                       </td>
-                      <td style={{ color: 'var(--text-secondary)' }}>{w.email}</td>
-                      <td style={{ color: 'var(--text-secondary)', fontFamily: 'monospace' }}>{w.phone}</td>
+                      <td style={{ color: 'var(--text-secondary)' }}>{u.email}</td>
                       <td>
-                        <span style={{
-                          fontWeight: 700,
-                          color: parseFloat(String(w.balance)) > 0 ? 'var(--accent)' : 'var(--text-muted)',
-                        }}>
-                          {fmt(w.balance)}
+                        <span className="badge" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+                          {u.role}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`badge badge-${u.isVerified ? 'success' : 'danger'}`}>
+                          {u.isVerified ? 'Active' : 'Deactivated'}
                         </span>
                       </td>
                       <td style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>
-                        {new Date(w.updated_at).toLocaleDateString('en-PK')}
+                        {u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-PK') : 'N/A'}
                       </td>
                       <td>
-                        <button
-                          className="btn btn-ghost btn-sm"
-                          onClick={() => openDetail(w)}
-                          id={`view-user-${w.user_id}`}
-                        >
-                          View Wallet →
-                        </button>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button
+                            className="btn btn-ghost btn-sm"
+                            style={{ padding: '6px' }}
+                            title="Edit"
+                            onClick={() => {
+                              setEditUser(u);
+                              setEditForm({ username: u.username, phone: u.phone, role: u.role });
+                            }}
+                          >
+                            <Edit size={16} />
+                          </button>
+                          <button
+                            className="btn btn-ghost btn-sm"
+                            style={{ padding: '6px', color: u.isVerified ? 'var(--warning)' : 'var(--success)' }}
+                            title={u.isVerified ? 'Deactivate' : 'Activate'}
+                            onClick={() => handleToggleStatus(u)}
+                          >
+                            {u.isVerified ? <ShieldBan size={16} /> : <ShieldCheck size={16} />}
+                          </button>
+                          <button
+                            className="btn btn-ghost btn-sm"
+                            style={{ padding: '6px', color: 'var(--red)' }}
+                            title="Delete"
+                            onClick={() => setDeleteTarget(u)}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -140,74 +205,72 @@ const Users: React.FC = () => {
         </div>
       )}
 
-      {/* Detail modal */}
-      <Modal isOpen={!!selected} onClose={closeModal} title={`${selected?.username}'s Wallet`} maxWidth={560}>
-        {detailLoading ? (
-          <div className="loading-center"><div className="spinner" /></div>
-        ) : detail ? (
-          <div>
-            <div style={{
-              display: 'grid', gridTemplateColumns: '1fr 1fr',
-              gap: 12, marginBottom: 24,
-            }}>
-              {[
-                { label: 'User ID', value: detail.wallet.user_id },
-                { label: 'Balance', value: fmt(detail.wallet.balance) },
-                { label: 'Email', value: selected?.email },
-                { label: 'Phone', value: selected?.phone },
-              ].map((row) => (
-                <div key={row.label} style={{
-                  padding: 14, borderRadius: 10,
-                  background: 'var(--bg-elevated)', border: '1px solid var(--border)',
-                }}>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
-                    {row.label}
-                  </div>
-                  <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{String(row.value)}</div>
-                </div>
-              ))}
-            </div>
-
-            <h4 style={{ fontWeight: 700, marginBottom: 12, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-              Recent Transactions ({detail.transactions.length})
-            </h4>
-            <div style={{ maxHeight: 260, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {detail.transactions.length === 0 ? (
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', textAlign: 'center', padding: 20 }}>No transactions yet</p>
-              ) : detail.transactions.slice(0, 20).map((t) => (
-                <div key={t.id} style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '10px 14px',
-                  background: 'var(--bg-elevated)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 8,
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ fontSize: '1.1rem' }}>{t.type === 'deposit' ? '⬆️' : '⬇️'}</span>
-                    <div>
-                      <div style={{ fontSize: '0.83rem', fontWeight: 600, textTransform: 'capitalize' }}>{t.type}</div>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                        {new Date(t.created_at).toLocaleString('en-PK')}
-                      </div>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ fontWeight: 700, color: t.type === 'deposit' ? 'var(--accent)' : 'var(--red)' }}>
-                      {t.type === 'deposit' ? '+' : '-'}{fmt(t.amount)}
-                    </span>
-                    <span className={`badge badge-${t.status === 'approved' ? 'success' : t.status === 'rejected' ? 'danger' : 'warning'}`}>
-                      {t.status}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
+      {/* Edit Modal */}
+      <Modal isOpen={!!editUser} onClose={() => setEditUser(null)} title="Edit User">
+        <form onSubmit={handleSaveEdit}>
+          <div style={{ marginBottom: 16 }}>
+            <label className="label">Username</label>
+            <input
+              className="input"
+              value={editForm.username}
+              onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
+              required
+            />
           </div>
-        ) : (
-          <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: 20 }}>
-            Failed to load wallet details.
+          <div style={{ marginBottom: 16 }}>
+            <label className="label">Phone</label>
+            <input
+              className="input"
+              value={editForm.phone}
+              onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+              required
+            />
+          </div>
+          <div style={{ marginBottom: 24 }}>
+            <label className="label">Role</label>
+            <select
+              className="input"
+              value={editForm.role}
+              onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+              required
+            >
+              <option value="customer">Customer</option>
+              <option value="collector">Collector</option>
+              <option value="admin">Admin</option>
+              <option value="support">Support</option>
+            </select>
+          </div>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+            <button type="button" className="btn btn-ghost" onClick={() => setEditUser(null)}>Cancel</button>
+            <button type="submit" className="btn btn-primary" disabled={isSaving}>
+              {isSaving ? 'Saving…' : 'Save Changes'}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Confirm Delete">
+        <div style={{ marginBottom: 24 }}>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: 12 }}>
+            Are you sure you want to delete <strong>{deleteTarget?.username}</strong>?
           </p>
-        )}
+          <p style={{ color: 'var(--red)', fontSize: '0.85rem' }}>
+            This action cannot be undone. Users with existing wallets or orders cannot be deleted.
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+          <button type="button" className="btn btn-ghost" onClick={() => setDeleteTarget(null)}>Cancel</button>
+          <button
+            type="button"
+            className="btn btn-primary"
+            style={{ background: 'var(--red)', color: '#fff' }}
+            onClick={handleDelete}
+            disabled={isDeleting}
+          >
+            {isDeleting ? 'Deleting…' : 'Delete User'}
+          </button>
+        </div>
       </Modal>
     </div>
   );

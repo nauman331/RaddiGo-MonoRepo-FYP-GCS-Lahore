@@ -17,7 +17,7 @@ export const CategoryRoutes = {
     },
     '/category/api/v1/categories': {
         POST: async (req: Request) => {
-            const authResult = authMiddleware(req);
+            const authResult = await authMiddleware(req);
             if (!authResult.authorized) {
                 return new Response(authResult.error || 'Unauthorized', { status: 401 });
             }
@@ -29,7 +29,7 @@ export const CategoryRoutes = {
             return await CategoryController.createCategory(req);
         },
         DELETE: async (req: Request) => {
-            const authResult = authMiddleware(req);
+            const authResult = await authMiddleware(req);
             if (!authResult.authorized) {
                 return new Response(authResult.error || 'Unauthorized', { status: 401 });
             }

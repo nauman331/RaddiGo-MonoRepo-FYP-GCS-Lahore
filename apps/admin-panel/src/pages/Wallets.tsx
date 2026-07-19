@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { getAllWallets } from '../api/wallets';
 import type { IWallet } from '../types';
+import { Search, Gem, BarChart3, Trophy } from 'lucide-react';
 
 const fmt = (v: string | number) =>
   `₨${parseFloat(String(v)).toLocaleString('en-PK', { minimumFractionDigits: 2 })}`;
@@ -46,14 +47,14 @@ const Wallets: React.FC = () => {
       </div>
 
       {/* Summary stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
+      <div className="stats-grid-3">
         {[
-          { label: 'Total Balance', value: fmt(totalBalance), icon: '💎', color: 'var(--accent)' },
-          { label: 'Average Balance', value: fmt(avgBalance), icon: '📊', color: 'var(--blue)' },
-          { label: 'Highest Balance', value: fmt(maxBalance), icon: '🏆', color: 'var(--amber)' },
+          { label: 'Total Balance', value: fmt(totalBalance), icon: <Gem size={24} color="var(--accent)" />, color: 'var(--accent)' },
+          { label: 'Average Balance', value: fmt(avgBalance), icon: <BarChart3 size={24} color="var(--blue)" />, color: 'var(--blue)' },
+          { label: 'Highest Balance', value: fmt(maxBalance), icon: <Trophy size={24} color="var(--amber)" />, color: 'var(--amber)' },
         ].map((s) => (
           <div key={s.label} className="card" style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 14 }}>
-            <span style={{ fontSize: '1.5rem' }}>{s.icon}</span>
+            <span style={{ display: 'flex' }}>{s.icon}</span>
             <div>
               <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{s.label}</div>
               <div style={{ fontSize: '1.1rem', fontWeight: 800, color: s.color, marginTop: 2 }}>{s.value}</div>
@@ -65,7 +66,7 @@ const Wallets: React.FC = () => {
       {/* Filters */}
       <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
         <div className="search-bar" style={{ flex: 1, minWidth: 200 }}>
-          <span className="search-icon">🔍</span>
+          <span className="search-icon"><Search size={18} /></span>
           <input
             id="wallets-search"
             className="input"

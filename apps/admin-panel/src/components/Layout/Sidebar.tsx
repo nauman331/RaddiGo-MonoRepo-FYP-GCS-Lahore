@@ -2,18 +2,30 @@ import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
+import {
+  LayoutDashboard,
+  Users as UsersIcon,
+  Wallet,
+  Clock,
+  FolderOpen,
+  LogOut,
+  ChevronLeft,
+  ChevronRight,
+  Recycle
+} from 'lucide-react';
+
 interface NavItem {
   path: string;
   label: string;
-  icon: string;
+  icon: React.ReactNode;
 }
 
 const navItems: NavItem[] = [
-  { path: '/dashboard', label: 'Dashboard',    icon: '📊' },
-  { path: '/users',     label: 'Users',         icon: '👥' },
-  { path: '/wallets',   label: 'Wallets',       icon: '💰' },
-  { path: '/pending',   label: 'Pending Txns',  icon: '⏳' },
-  { path: '/categories',label: 'Categories',    icon: '🗂️' },
+  { path: '/dashboard', label: 'Dashboard',    icon: <LayoutDashboard size={20} /> },
+  { path: '/users',     label: 'Users',        icon: <UsersIcon size={20} /> },
+  { path: '/wallets',   label: 'Wallets',      icon: <Wallet size={20} /> },
+  { path: '/pending',   label: 'Pending Txns', icon: <Clock size={20} /> },
+  { path: '/categories',label: 'Categories',   icon: <FolderOpen size={20} /> },
 ];
 
 interface SidebarProps {
@@ -65,7 +77,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '1.2rem', flexShrink: 0,
             }}>
-              ♻️
+              <Recycle size={22} color="#080810" strokeWidth={2.5} />
             </div>
             <div>
               <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--text-primary)', lineHeight: 1 }}>
@@ -85,7 +97,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '1.2rem',
           }}>
-            ♻️
+            <Recycle size={22} color="#080810" strokeWidth={2.5} />
           </div>
         )}
         <button
@@ -94,7 +106,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
           style={{ flexShrink: 0, marginLeft: collapsed ? 0 : 4 }}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
-          {collapsed ? '→' : '←'}
+          {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
         </button>
       </div>
 
@@ -121,7 +133,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
             })}
             title={collapsed ? item.label : undefined}
           >
-            <span style={{ fontSize: '1.1rem', flexShrink: 0 }}>{item.icon}</span>
+            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{item.icon}</span>
             {!collapsed && <span>{item.label}</span>}
           </NavLink>
         ))}
@@ -165,7 +177,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
           }}
           title={collapsed ? 'Logout' : undefined}
         >
-          <span>🚪</span>
+          <span style={{ display: 'flex', alignItems: 'center' }}><LogOut size={18} /></span>
           {!collapsed && <span>Logout</span>}
         </button>
       </div>

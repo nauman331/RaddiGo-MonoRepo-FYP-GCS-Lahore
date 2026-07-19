@@ -1,8 +1,14 @@
 import { PORTS, connectDB, connectRedis } from '@raddi/config';
 import { AdminWalletRoutes } from './wallet.routes';
+import { AdminUserRoutes } from './user.routes';
 
 await connectDB();
 await connectRedis();
+
+const allRoutes = {
+    ...AdminWalletRoutes,
+    ...AdminUserRoutes,
+};
 
 const server = Bun.serve({
     port: PORTS.ADMIN || 3001,
@@ -19,7 +25,7 @@ const server = Bun.serve({
                 });
             }
 
-            const route = (AdminWalletRoutes as any)[url.pathname];
+            const route = (allRoutes as any)[url.pathname];
             if (!route) {
                 return new Response('Not Found', { status: 404 });
             }

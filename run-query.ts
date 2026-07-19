@@ -1,0 +1,1 @@
+import pool from './packages/db/index'; pool.execute('ALTER TABLE users ADD COLUMN isActive BOOLEAN DEFAULT TRUE;').then(() => {console.log('Success'); process.exit(0);}).catch((e) => {console.log(e); process.exit(0);});

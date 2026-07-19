@@ -3,6 +3,7 @@ import { getCategories, createCategory, deleteCategory } from '../api/categories
 import { useToast } from '../components/ui/Toast';
 import Modal from '../components/ui/Modal';
 import type { ICategory } from '../types';
+import { Search, FolderOpen, Trash2, Plus, Recycle } from 'lucide-react';
 
 const Categories: React.FC = () => {
   const { showToast } = useToast();
@@ -40,7 +41,7 @@ const Categories: React.FC = () => {
     setCreating(true);
     try {
       await createCategory(newName.trim(), newLogo.trim() || undefined);
-      showToast(`🗂️ Category "${newName}" created successfully!`, 'success');
+      showToast(`Category "${newName}" created successfully!`, 'success');
       setNewName(''); setNewLogo(''); setShowCreate(false);
       load();
     } catch (err: unknown) {
@@ -56,7 +57,7 @@ const Categories: React.FC = () => {
     setDeleting(true);
     try {
       await deleteCategory(deleteTarget.id);
-      showToast(`🗑️ Category "${deleteTarget.name}" deleted`, 'info');
+      showToast(`Category "${deleteTarget.name}" deleted`, 'info');
       setCategories((prev) => prev.filter((c) => c.id !== deleteTarget.id));
       setDeleteTarget(null);
     } catch (err: unknown) {
@@ -83,7 +84,7 @@ const Categories: React.FC = () => {
         </div>
         <div style={{ display: 'flex', gap: 12 }}>
           <div className="search-bar" style={{ maxWidth: 260 }}>
-            <span className="search-icon">🔍</span>
+            <span className="search-icon"><Search size={18} /></span>
             <input
               id="categories-search"
               className="input"
@@ -97,7 +98,7 @@ const Categories: React.FC = () => {
             className="btn btn-primary"
             onClick={() => { setShowCreate(true); setNewName(''); setNewLogo(''); }}
           >
-            ＋ New Category
+            <Plus size={16} style={{ marginRight: 6 }} /> New Category
           </button>
         </div>
       </div>
@@ -107,12 +108,12 @@ const Categories: React.FC = () => {
       ) : filtered.length === 0 ? (
         <div className="card">
           <div className="empty-state">
-            <span className="empty-icon">🗂️</span>
+            <FolderOpen size={48} opacity={0.4} />
             <h3 style={{ color: 'var(--text-primary)' }}>{search ? 'No results found' : 'No Categories Yet'}</h3>
             <p>{search ? 'Try a different search term.' : 'Create the first scrap category to get started.'}</p>
             {!search && (
               <button className="btn btn-primary" onClick={() => setShowCreate(true)} style={{ marginTop: 12 }}>
-                ＋ Create Category
+                <Plus size={16} style={{ marginRight: 6 }} /> Create Category
               </button>
             )}
           </div>
@@ -165,7 +166,7 @@ const Categories: React.FC = () => {
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                       onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                     />
-                  ) : '♻️'}
+                  ) : <Recycle size={28} opacity={0.4} />}
                 </div>
 
                 <div>
@@ -181,7 +182,7 @@ const Categories: React.FC = () => {
                   style={{ width: '100%', padding: '7px 0', marginTop: 4 }}
                   onClick={() => setDeleteTarget(cat)}
                 >
-                  🗑️ Delete
+                  <Trash2 size={16} style={{ marginRight: 6 }} /> Delete
                 </button>
               </div>
             );
@@ -236,7 +237,7 @@ const Categories: React.FC = () => {
               style={{ flex: 1 }}
               disabled={creating}
             >
-              {creating ? <><span className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} /> Creating…</> : '＋ Create Category'}
+              {creating ? <><span className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} /> Creating…</> : <><Plus size={16} style={{ marginRight: 6 }} /> Create Category</>}
             </button>
           </div>
         </form>
@@ -266,7 +267,7 @@ const Categories: React.FC = () => {
                 onClick={handleDelete}
                 disabled={deleting}
               >
-                {deleting ? <><span className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} /> Deleting…</> : '🗑️ Delete'}
+                {deleting ? <><span className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} /> Deleting…</> : <><Trash2 size={16} style={{ marginRight: 6 }} /> Delete</>}
               </button>
             </div>
           </div>

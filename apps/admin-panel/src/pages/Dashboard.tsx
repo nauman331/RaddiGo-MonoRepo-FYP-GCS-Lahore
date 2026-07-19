@@ -9,6 +9,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar,
 } from 'recharts';
+import { Users as UsersIcon, Wallet, Clock, FolderOpen, WalletCards } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -76,34 +77,34 @@ const Dashboard: React.FC = () => {
           title="Total Users"
           value={wallets.length}
           subtitle="Registered wallet holders"
-          icon="👥"
+          icon={<UsersIcon size={20} />}
           color="blue"
         />
         <StatCard
           title="Total Balance"
           value={`₨${totalBalance.toLocaleString('en-PK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           subtitle="Combined platform balance"
-          icon="💰"
+          icon={<Wallet size={20} />}
           color="accent"
         />
         <StatCard
           title="Pending Transactions"
           value={pending.length}
           subtitle={`${pendingDeposits} deposits · ${pendingWithdrawals} withdrawals`}
-          icon="⏳"
+          icon={<Clock size={20} />}
           color="amber"
         />
         <StatCard
           title="Categories"
           value={categories.length}
           subtitle="Active scrap categories"
-          icon="🗂️"
+          icon={<FolderOpen size={20} />}
           color="purple"
         />
       </div>
 
       {/* Charts row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 20, marginBottom: 28 }}>
+      <div className="dashboard-grid">
         {/* Area chart */}
         <div className="card">
           <div style={{ marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -161,15 +162,15 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Quick actions + recent wallets */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+      <div className="dashboard-split">
         {/* Quick actions */}
         <div className="card">
           <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 20 }}>Quick Actions</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {[
-              { icon: '⏳', label: 'Review Pending Transactions', count: pending.length, path: '/pending', color: 'var(--amber)' },
-              { icon: '👥', label: 'View All Users', count: wallets.length, path: '/users', color: 'var(--blue)' },
-              { icon: '🗂️', label: 'Manage Categories', count: categories.length, path: '/categories', color: 'var(--purple)' },
+              { icon: <Clock size={20} />, label: 'Review Pending Transactions', count: pending.length, path: '/pending', color: 'var(--amber)' },
+              { icon: <UsersIcon size={20} />, label: 'View All Users', count: wallets.length, path: '/users', color: 'var(--blue)' },
+              { icon: <FolderOpen size={20} />, label: 'Manage Categories', count: categories.length, path: '/categories', color: 'var(--purple)' },
             ].map((action) => (
               <button
                 key={action.path}
@@ -189,7 +190,7 @@ const Dashboard: React.FC = () => {
                 onMouseOut={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <span style={{ fontSize: '1.2rem' }}>{action.icon}</span>
+                  <span style={{ display: 'flex', alignItems: 'center', color: action.color }}>{action.icon}</span>
                   <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>{action.label}</span>
                 </div>
                 <span style={{
@@ -242,7 +243,7 @@ const Dashboard: React.FC = () => {
               ))}
             {wallets.length === 0 && (
               <div className="empty-state" style={{ padding: '40px 0' }}>
-                <span className="empty-icon">💰</span>
+                <WalletCards size={48} opacity={0.4} />
                 <span>No wallet data available</span>
               </div>
             )}

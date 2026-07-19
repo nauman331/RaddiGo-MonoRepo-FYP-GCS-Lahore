@@ -5,7 +5,7 @@ export interface AuthRequest extends Request {
     user?: any;
 }
 
-export const authMiddleware = (req: Request): { authorized: boolean; user?: any; error?: string } => {
+export const authMiddleware = async (req: Request): Promise<{ authorized: boolean; user?: any; error?: string }> => {
     const authHeader = req.headers.get('authorization');
     const token = authHeader?.split(' ')[1];
 
@@ -14,8 +14,16 @@ export const authMiddleware = (req: Request): { authorized: boolean; user?: any;
     }
 
     try {
-        const decoded = verifyToken(token);
+        const decoded = verifyToken(token) as any;
         if (!decoded) return { authorized: false, error: 'Invalid token' };
+        
+        // Check if user is verified (active)
+        const [rows] = await pool.query("SELECT isActive FROM users WHERE id = ?", [decoded.userId]);
+        const userRow = (rows as any)[0];
+        if (!userRow || !userRow.isActive) {
+            return { authorized: false, error: 'Account has been deactivated. Please contact support.' };
+        }
+        
         return { authorized: true, user: decoded };
     } catch (err) {
         return { authorized: false, error: 'Invalid token' };

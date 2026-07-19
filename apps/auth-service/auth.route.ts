@@ -29,7 +29,7 @@ export const AuthRoutes = {
     },
     '/auth/api/v1/me': {
         GET: async (req: Request) => {
-            const authResult = authMiddleware(req);
+            const authResult = await authMiddleware(req);
             if (!authResult.authorized) {
                 return new Response(authResult.error || 'Unauthorized', { status: 401 });
             }
@@ -39,7 +39,7 @@ export const AuthRoutes = {
     },
     '/auth/api/v1/me/delete': {
         DELETE: async (req: Request) => {
-            const authResult = authMiddleware(req);
+            const authResult = await authMiddleware(req);
             if (!authResult.authorized) {
                 return new Response(authResult.error || 'Unauthorized', { status: 401 });
             }
@@ -49,7 +49,7 @@ export const AuthRoutes = {
     },
     '/auth/api/v1/me/update': {
     PUT: async (req: Request) => {
-        const authResult = authMiddleware(req);
+        const authResult = await authMiddleware(req);
         if (!authResult.authorized) {
             return new Response(authResult.error || 'Unauthorized', { status: 401 });
         }

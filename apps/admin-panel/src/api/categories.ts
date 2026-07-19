@@ -6,7 +6,8 @@ export const getCategories = async (
   limit = 50
 ): Promise<{ categories: ICategory[]; pagination: PaginationMeta }> => {
   const { data } = await api.get(`/category/api/v1/categories?page=${page}&limit=${limit}`);
-  return data;
+  // Fix double nested categories if backend returns { categories: { categories: [], pagination: {} } }
+  return data.categories && Array.isArray(data.categories.categories) ? data.categories : data;
 };
 
 export const createCategory = async (name: string, categoryLogo?: string): Promise<void> => {

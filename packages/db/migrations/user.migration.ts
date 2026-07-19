@@ -11,6 +11,7 @@ export async function userMigration(pool: any) {
       facebookId VARCHAR(100),
       profilePicture VARCHAR(255),
       role ENUM('customer', 'admin', 'support', 'collector') DEFAULT 'customer',
+      isActive BOOLEAN DEFAULT TRUE,
       isVerified BOOLEAN DEFAULT FALSE,
       otp VARCHAR(6),
       otpExpiry DATETIME,

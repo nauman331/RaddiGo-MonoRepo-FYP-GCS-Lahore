@@ -4,7 +4,7 @@ import { authMiddleware } from '../../packages/middleware';
 export const WalletRoutes = {
     '/wallet/api/v1/deposit': {
         POST: async (req: Request) => {
-            const authResult = authMiddleware(req);
+            const authResult = await authMiddleware(req);
             if (!authResult.authorized) {
                 return new Response(authResult.error || 'Unauthorized', { status: 401 });
             }
@@ -14,7 +14,7 @@ export const WalletRoutes = {
     },
     '/wallet/api/v1/withdraw': {
         POST: async (req: Request) => {
-            const authResult = authMiddleware(req);
+            const authResult = await authMiddleware(req);
             if (!authResult.authorized) {
                 return new Response(authResult.error || 'Unauthorized', { status: 401 });
             }
@@ -24,7 +24,7 @@ export const WalletRoutes = {
     },
     '/wallet/api/v1': {
         GET: async (req: Request) => {
-            const authResult = authMiddleware(req);
+            const authResult = await authMiddleware(req);
             if (!authResult.authorized) {
                 return new Response(authResult.error || 'Unauthorized', { status: 401 });
             }

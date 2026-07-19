@@ -1,20 +1,21 @@
 import pool, { redis } from '@raddi/db';  // adjust import based on your actual db package
 import type { RowDataPacket } from 'mysql2';
+import { rolesMiddleware } from '@raddi/middleware';
 
 const safeParseJSON = async <T>(req: Request): Promise<T | null> => {
     try { return await req.json() as T; } catch { return null; }
 };
 
-const requireAdmin = (req: Request): Response | null => {
-    const user = (req as any).user;
-    if (!user || user.role !== 'admin') {
+const requireAdmin = async (req: Request): Promise<Response | null> => {
+    const isAllowed = await rolesMiddleware(req as any, ['admin']);
+    if (!isAllowed) {
         return Response.json({ message: 'Forbidden: admin only' }, { status: 403 });
     }
     return null;
 };
 
 export const adminGetAllWallets = async (req: Request): Promise<Response> => {
-    const res = requireAdmin(req); if (res) return res;
+    const res = await requireAdmin(req); if (res) return res;
     const [wallets] = await pool.query<RowDataPacket[]>(
         `SELECT w.user_id, u.username, u.email, u.phone, w.balance, w.updated_at
          FROM wallets w JOIN users u ON w.user_id = u.id
@@ -24,7 +25,7 @@ export const adminGetAllWallets = async (req: Request): Promise<Response> => {
 };
 
 export const adminGetUserWallet = async (req: Request): Promise<Response> => {
-    const res = requireAdmin(req); if (res) return res;
+    const res = await requireAdmin(req); if (res) return res;
     const url = new URL(req.url);
     const userId = url.searchParams.get('userId');
     if (!userId) return Response.json({ message: 'User ID required' }, { status: 400 });
@@ -40,7 +41,7 @@ export const adminGetUserWallet = async (req: Request): Promise<Response> => {
 };
 
 export const adminGetPending = async (req: Request): Promise<Response> => {
-    const res = requireAdmin(req); if (res) return res;
+    const res = await requireAdmin(req); if (res) return res;
     const [pending] = await pool.query<RowDataPacket[]>(
         `SELECT wt.*, u.username, u.email
          FROM wallet_transactions wt JOIN users u ON wt.user_id = u.id
@@ -50,7 +51,7 @@ export const adminGetPending = async (req: Request): Promise<Response> => {
 };
 
 export const adminApprove = async (req: Request): Promise<Response> => {
-    const res = requireAdmin(req); if (res) return res;
+    const res = await requireAdmin(req); if (res) return res;
     const admin = (req as any).user;
     const url = new URL(req.url);
     const txnId = url.searchParams.get('id');
@@ -92,7 +93,7 @@ export const adminApprove = async (req: Request): Promise<Response> => {
 };
 
 export const adminReject = async (req: Request): Promise<Response> => {
-    const res = requireAdmin(req); if (res) return res;
+    const res = await requireAdmin(req); if (res) return res;
     const admin = (req as any).user;
     const url = new URL(req.url);
     const txnId = url.searchParams.get('id');

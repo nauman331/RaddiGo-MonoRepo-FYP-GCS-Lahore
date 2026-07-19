@@ -3,6 +3,7 @@ import { getPendingTransactions, approveTransaction, rejectTransaction } from '.
 import { useToast } from '../components/ui/Toast';
 import Modal from '../components/ui/Modal';
 import type { ITransaction } from '../types';
+import { List, ArrowUpCircle, ArrowDownCircle, RefreshCw, CheckCircle, Check, X } from 'lucide-react';
 
 const fmt = (v: string | number) =>
   `₨${parseFloat(String(v)).toLocaleString('en-PK', { minimumFractionDigits: 2 })}`;
@@ -76,16 +77,16 @@ const PendingTransactions: React.FC = () => {
           <p className="page-subtitle">{transactions.length} requests awaiting review</p>
         </div>
         <button className="btn btn-ghost" onClick={load} disabled={loading} id="refresh-pending-btn">
-          🔄 Refresh
+          <RefreshCw size={16} /> Refresh
         </button>
       </div>
 
       {/* Summary chips */}
       <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
         {[
-          { key: 'all',        label: `All (${transactions.length})`,    icon: '📋' },
-          { key: 'deposit',    label: `Deposits (${deposits})`,          icon: '⬆️' },
-          { key: 'withdrawal', label: `Withdrawals (${withdrawals})`,    icon: '⬇️' },
+          { key: 'all',        label: `All (${transactions.length})`,    icon: <List size={18} /> },
+          { key: 'deposit',    label: `Deposits (${deposits})`,          icon: <ArrowUpCircle size={18} /> },
+          { key: 'withdrawal', label: `Withdrawals (${withdrawals})`,    icon: <ArrowDownCircle size={18} /> },
         ].map((f) => (
           <button
             key={f.key}
@@ -100,7 +101,7 @@ const PendingTransactions: React.FC = () => {
               fontSize: '0.83rem',
             }}
           >
-            {f.icon} {f.label}
+            <span style={{ display: 'flex' }}>{f.icon}</span> {f.label}
           </button>
         ))}
         <div style={{
@@ -121,7 +122,7 @@ const PendingTransactions: React.FC = () => {
       ) : displayed.length === 0 ? (
         <div className="card">
           <div className="empty-state">
-            <span className="empty-icon">🎉</span>
+            <CheckCircle size={48} opacity={0.4} />
             <h3 style={{ color: 'var(--text-primary)' }}>All Clear!</h3>
             <p>No pending transactions to review.</p>
           </div>
@@ -147,7 +148,7 @@ const PendingTransactions: React.FC = () => {
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: '1.4rem', flexShrink: 0,
                 }}>
-                  {tx.type === 'deposit' ? '⬆️' : '⬇️'}
+                  {tx.type === 'deposit' ? <ArrowUpCircle size={24} /> : <ArrowDownCircle size={24} />}
                 </div>
                 <div>
                   <div style={{ fontWeight: 700, fontSize: '1rem', textTransform: 'capitalize', marginBottom: 2 }}>
@@ -185,7 +186,7 @@ const PendingTransactions: React.FC = () => {
                   onClick={() => handleApprove(tx)}
                   style={{ padding: '9px 18px' }}
                 >
-                  {actionLoading === tx.id ? <span className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} /> : '✅'} Approve
+                  {actionLoading === tx.id ? <span className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} /> : <Check size={16} />} Approve
                 </button>
                 <button
                   id={`reject-btn-${tx.id}`}
@@ -194,7 +195,7 @@ const PendingTransactions: React.FC = () => {
                   onClick={() => { setRejectTarget(tx); setRejectNote(''); }}
                   style={{ padding: '9px 18px' }}
                 >
-                  ❌ Reject
+                  <X size={16} /> Reject
                 </button>
               </div>
             </div>
@@ -250,7 +251,7 @@ const PendingTransactions: React.FC = () => {
               >
                 {actionLoading === rejectTarget.id
                   ? <><span className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} /> Rejecting…</>
-                  : '❌ Confirm Reject'
+                  : <><X size={16} /> Confirm Reject</>
                 }
               </button>
             </div>
