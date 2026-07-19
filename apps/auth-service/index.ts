@@ -12,6 +12,7 @@ const allRoutes = {
 
 const server = Bun.serve({
     port: PORTS.AUTH,
+    hostname: "0.0.0.0",
     fetch: async (req: Request) => {
         try {
             const url = new URL(req.url);

@@ -6,6 +6,7 @@ await connectRedis();
 
 const server = Bun.serve({
     port: PORTS.CATEGORY,
+    hostname: "0.0.0.0",
     fetch: async (req: Request) => {
         try {
             const url = new URL(req.url);

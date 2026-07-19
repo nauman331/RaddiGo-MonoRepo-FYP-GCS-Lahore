@@ -377,4 +377,31 @@ const doGoogleLogin = async (req: Request): Promise<Response> => {
     }
 }
 
-export { register, login, verifyEmail, resendVerificationEmail, getMe, deleteMe, resetPassword, doGoogleLogin, updateProfile };
+const adminLogin = async (req: Request): Promise<Response> => {
+    try {
+        const body = await safeParseJSON<IUser>(req);
+        if (!body) return Response.json({ message: 'Invalid or missing JSON payload' }, { status: 400 });
+
+        const { email, password } = body;
+        if (!email || !password) return Response.json({ message: 'Missing required fields' }, { status: 400 });
+
+        const [rows] = await pool.query<RowDataPacket[]>("SELECT * FROM users WHERE email = ?", [email]);
+        const user = (rows as unknown as IUser[])[0];
+
+        if (!user) return Response.json({ message: 'Email not registered' }, { status: 401 });
+        if (user.role !== 'admin') return Response.json({ message: 'Access denied: Admin only' }, { status: 403 });
+
+        const isValid = await Bun.password.verify(password, user.password, "bcrypt");
+        if (!isValid) return Response.json({ message: 'Invalid password' }, { status: 401 });
+
+        if (!user.isVerified) return Response.json({ message: 'Email not verified' }, { status: 403 });
+
+        const token = signToken(user.id.toString());
+        return Response.json({ token, userId: user.id, role: user.role, isOk: true }, { status: 200 });
+    } catch (error) {
+        console.error('adminLogin error:', error);
+        return Response.json({ message: 'Admin login failed' }, { status: 500 });
+    }
+};
+
+export { register, login, verifyEmail, resendVerificationEmail, getMe, deleteMe, resetPassword, doGoogleLogin, updateProfile, adminLogin };
