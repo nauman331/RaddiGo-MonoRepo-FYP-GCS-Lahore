@@ -2,9 +2,14 @@ export interface IUser {
   id: number;
   username: string;
   email: string;
-  password: string;
+  password?: string;
   phone: string;
+  address?: string;
+  googleId?: string;
+  facebookId?: string;
+  profilePicture?: string;
   role: 'customer' | 'admin' | 'support' | 'collector';
+  isActive: boolean;
   isVerified: boolean;
   otp?: string;
   otpExpiry?: Date;
@@ -30,7 +35,9 @@ export interface IAd {
 
 export interface ICategory {
   id: number;
-  name: string;
+  nameEng: string;
+  nameUrdu: string;
+  todayPrice: number;
   categoryLogo?: string;
   createdAt: Date;
   updatedAt: Date;

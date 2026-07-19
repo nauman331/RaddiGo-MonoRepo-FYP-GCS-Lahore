@@ -141,6 +141,10 @@ const login = async (req: Request): Promise<Response> => {
             return Response.json({ message: 'Email Not registered' }, { status: 401 });
         }
 
+        if (!user2.isActive) {
+            return Response.json({ message: 'Account has been deactivated. Contact support.' }, { status: 403 });
+        }
+
         const isPasswordValid = user2 ? await Bun.password.verify(password, user2.password, "bcrypt") : false;
         if (!isPasswordValid) {
             return Response.json({ message: 'Invalid password' }, { status: 401 });

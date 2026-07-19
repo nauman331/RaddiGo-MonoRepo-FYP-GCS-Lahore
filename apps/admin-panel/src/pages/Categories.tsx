@@ -11,9 +11,10 @@ const Categories: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
-  // Create modal
   const [showCreate, setShowCreate] = useState(false);
-  const [newName, setNewName] = useState('');
+  const [newNameEng, setNewNameEng] = useState('');
+  const [newNameUrdu, setNewNameUrdu] = useState('');
+  const [newRate, setNewRate] = useState<number | ''>('');
   const [newLogo, setNewLogo] = useState('');
   const [creating, setCreating] = useState(false);
 
@@ -37,12 +38,12 @@ const Categories: React.FC = () => {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newName.trim()) { showToast('Category name is required', 'error'); return; }
+    if (!newNameEng.trim() || !newNameUrdu.trim() || newRate === '') { showToast('Name and Rate are required', 'error'); return; }
     setCreating(true);
     try {
-      await createCategory(newName.trim(), newLogo.trim() || undefined);
-      showToast(`Category "${newName}" created successfully!`, 'success');
-      setNewName(''); setNewLogo(''); setShowCreate(false);
+      await createCategory(newNameEng.trim(), newNameUrdu.trim(), Number(newRate), newLogo.trim() || undefined);
+      showToast(`Category "${newNameEng}" created successfully!`, 'success');
+      setNewNameEng(''); setNewNameUrdu(''); setNewRate(''); setNewLogo(''); setShowCreate(false);
       load();
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to create category';
@@ -57,7 +58,7 @@ const Categories: React.FC = () => {
     setDeleting(true);
     try {
       await deleteCategory(deleteTarget.id);
-      showToast(`Category "${deleteTarget.name}" deleted`, 'info');
+      showToast(`Category "${deleteTarget.nameEng}" deleted`, 'info');
       setCategories((prev) => prev.filter((c) => c.id !== deleteTarget.id));
       setDeleteTarget(null);
     } catch (err: unknown) {
@@ -68,7 +69,7 @@ const Categories: React.FC = () => {
     }
   };
 
-  const filtered = categories.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()));
+  const filtered = categories.filter((c) => c.nameEng?.toLowerCase().includes(search.toLowerCase()));
 
   const categoryColors = [
     '#00e676', '#7c5cfc', '#4db8ff', '#ffb300', '#ff4d6d',
@@ -96,7 +97,7 @@ const Categories: React.FC = () => {
           <button
             id="create-category-btn"
             className="btn btn-primary"
-            onClick={() => { setShowCreate(true); setNewName(''); setNewLogo(''); }}
+            onClick={() => { setShowCreate(true); setNewNameEng(''); setNewNameUrdu(''); setNewRate(''); setNewLogo(''); }}
           >
             <Plus size={16} style={{ marginRight: 6 }} /> New Category
           </button>
@@ -162,7 +163,7 @@ const Categories: React.FC = () => {
                   {cat.categoryLogo ? (
                     <img
                       src={cat.categoryLogo}
-                      alt={cat.name}
+                      alt={cat.nameEng}
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                       onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                     />
@@ -171,7 +172,7 @@ const Categories: React.FC = () => {
 
                 <div>
                   <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)', marginBottom: 4 }}>
-                    {cat.name}
+                    {cat.nameEng}
                   </div>
                   <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>ID: {cat.id}</div>
                 </div>
@@ -194,14 +195,37 @@ const Categories: React.FC = () => {
       <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="Create New Category">
         <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
           <div className="form-group">
-            <label className="form-label" htmlFor="cat-name">Category Name *</label>
+            <label className="form-label" htmlFor="cat-name-eng">Category Name (English) *</label>
             <input
-              id="cat-name"
+              id="cat-name-eng"
               className="input"
               placeholder="e.g. Plastic Bottles"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
+              value={newNameEng}
+              onChange={(e) => setNewNameEng(e.target.value)}
               autoFocus
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label" htmlFor="cat-name-urdu">Category Name (Urdu) *</label>
+            <input
+              id="cat-name-urdu"
+              className="input"
+              placeholder="e.g. پلاسٹک کی بوتلیں"
+              value={newNameUrdu}
+              onChange={(e) => setNewNameUrdu(e.target.value)}
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label" htmlFor="cat-rate">Rate (Rs) *</label>
+            <input
+              id="cat-rate"
+              type="number"
+              className="input"
+              placeholder="e.g. 50"
+              value={newRate}
+              onChange={(e) => setNewRate(e.target.value === '' ? '' : Number(e.target.value))}
               required
             />
           </div>
@@ -254,7 +278,7 @@ const Categories: React.FC = () => {
               marginBottom: 20, textAlign: 'center',
             }}>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', lineHeight: 1.5 }}>
-                Are you sure you want to delete <strong style={{ color: 'var(--text-primary)' }}>"{deleteTarget.name}"</strong>?<br />
+                Are you sure you want to delete <strong style={{ color: 'var(--text-primary)' }}>"{deleteTarget.nameEng}"</strong>?<br />
                 This action cannot be undone.
               </p>
             </div>

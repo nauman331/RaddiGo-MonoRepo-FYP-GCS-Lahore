@@ -10,8 +10,8 @@ export const getCategories = async (
   return data.categories && Array.isArray(data.categories.categories) ? data.categories : data;
 };
 
-export const createCategory = async (name: string, categoryLogo?: string): Promise<void> => {
-  await api.post('/category/api/v1/categories', { name, categoryLogo });
+export const createCategory = async (nameEng: string, nameUrdu: string, todayPrice: number, categoryLogo?: string): Promise<void> => {
+  await api.post('/category/api/v1/categories', { nameEng, nameUrdu, todayPrice, categoryLogo });
 };
 
 export const deleteCategory = async (id: number): Promise<void> => {

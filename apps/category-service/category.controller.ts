@@ -4,21 +4,21 @@ import type { RowDataPacket } from "mysql2";
 
 export const createCategory = async (req: Request) => {
     try {
-        const { name, categoryLogo } = await req.json() as ICategory;
-        if (!name) {
-            return Response.json({ message: "Category name is required" }, { status: 400 });
+        const { nameEng, nameUrdu, todayPrice, categoryLogo } = await req.json() as ICategory;
+        if (!nameEng || !nameUrdu || todayPrice === undefined) {
+            return Response.json({ message: "Name and Rate are required" }, { status: 400 });
         }
         const [existingCategoryRows] = await pool.query<RowDataPacket[]>(
-            "SELECT * FROM categories WHERE name = ?",
-            [name]
+            "SELECT * FROM categories WHERE nameEng = ?",
+            [nameEng]
         );
         const existingCategory = (existingCategoryRows as unknown as ICategory[])[0];
         if (existingCategory) {
             return Response.json({ message: "Category already exists" }, { status: 400 });
         }
         await pool.execute(
-            "INSERT INTO categories (name, categoryLogo) VALUES (?, ?)",
-            [name, categoryLogo || null]
+            "INSERT INTO categories (nameEng, nameUrdu, todayPrice, categoryLogo) VALUES (?, ?, ?, ?)",
+            [nameEng, nameUrdu, todayPrice, categoryLogo || null]
         );
         await redis.del("categories:list");
         const keys = await redis.keys("categories:list:page:*");

@@ -6,6 +6,7 @@ export interface IUser {
   phone: string;
   role: 'admin' | 'customer' | 'collector';
   isVerified: boolean;
+  isActive: boolean;
   address?: string;
   profilePicture?: string;
   createdAt?: string;
@@ -49,7 +50,9 @@ export interface ITransaction {
 // ---- Category ----
 export interface ICategory {
   id: number;
-  name: string;
+  nameEng: string;
+  nameUrdu: string;
+  todayPrice: number;
   categoryLogo?: string;
   createdAt?: string;
 }

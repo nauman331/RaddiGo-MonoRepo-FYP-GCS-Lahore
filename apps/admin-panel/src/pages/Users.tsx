@@ -51,8 +51,8 @@ const Users: React.FC = () => {
 
   const handleToggleStatus = async (user: IUser) => {
     try {
-      await toggleUserStatus(user.id, !user.isVerified);
-      showToast(`User ${user.username} has been ${!user.isVerified ? 'activated' : 'deactivated'}`, 'success');
+      await toggleUserStatus(user.id, !user.isActive);
+      showToast(`User ${user.username} has been ${!user.isActive ? 'activated' : 'deactivated'}`, 'success');
       loadUsers();
     } catch (err: any) {
       showToast(err?.response?.data?.message || 'Failed to toggle status', 'error');
@@ -158,9 +158,14 @@ const Users: React.FC = () => {
                         </span>
                       </td>
                       <td>
-                        <span className={`badge badge-${u.isVerified ? 'success' : 'danger'}`}>
-                          {u.isVerified ? 'Active' : 'Deactivated'}
+                        <span className={`badge badge-${u.isActive ? 'success' : 'danger'}`}>
+                          {u.isActive ? 'Active' : 'Deactivated'}
                         </span>
+                        {!u.isVerified && (
+                          <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 4 }}>
+                            Unverified Email
+                          </span>
+                        )}
                       </td>
                       <td style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>
                         {u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-PK') : 'N/A'}
@@ -180,11 +185,11 @@ const Users: React.FC = () => {
                           </button>
                           <button
                             className="btn btn-ghost btn-sm"
-                            style={{ padding: '6px', color: u.isVerified ? 'var(--warning)' : 'var(--success)' }}
-                            title={u.isVerified ? 'Deactivate' : 'Activate'}
+                            style={{ padding: '6px', color: u.isActive ? 'var(--warning)' : 'var(--success)' }}
+                            title={u.isActive ? 'Deactivate' : 'Activate'}
                             onClick={() => handleToggleStatus(u)}
                           >
-                            {u.isVerified ? <ShieldBan size={16} /> : <ShieldCheck size={16} />}
+                            {u.isActive ? <ShieldBan size={16} /> : <ShieldCheck size={16} />}
                           </button>
                           <button
                             className="btn btn-ghost btn-sm"
