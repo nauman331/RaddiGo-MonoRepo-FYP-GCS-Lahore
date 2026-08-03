@@ -38,20 +38,23 @@ const Categories: React.FC = () => {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newNameEng.trim() || !newNameUrdu.trim() || newRate === '') { showToast('Name and Rate are required', 'error'); return; }
+    if (!newNameEng.trim() || newRate === '') { showToast('Name and Rate are required', 'error'); return; }
     setCreating(true);
     try {
-      await createCategory(newNameEng.trim(), newNameUrdu.trim(), Number(newRate), newLogo.trim() || undefined);
+      const urduName = newNameUrdu.trim() || newNameEng.trim();
+      await createCategory(newNameEng.trim(), urduName, Number(newRate), newLogo.trim() || undefined);
       showToast(`Category "${newNameEng}" created successfully!`, 'success');
       setNewNameEng(''); setNewNameUrdu(''); setNewRate(''); setNewLogo(''); setShowCreate(false);
       load();
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to create category';
+      const serverErr = (err as { response?: { data?: { message?: string; error?: string } } })?.response?.data;
+      const msg = serverErr?.error ? `${serverErr.message}: ${serverErr.error}` : (serverErr?.message || 'Failed to create category');
       showToast(msg, 'error');
     } finally {
       setCreating(false);
     }
   };
+
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -207,16 +210,16 @@ const Categories: React.FC = () => {
             />
           </div>
           <div className="form-group">
-            <label className="form-label" htmlFor="cat-name-urdu">Category Name (Urdu) *</label>
+            <label className="form-label" htmlFor="cat-name-urdu">Category Name (Urdu) (optional)</label>
             <input
               id="cat-name-urdu"
               className="input"
-              placeholder="e.g. پلاسٹک کی بوتلیں"
+              placeholder="e.g. پلاسٹک کی بوتلیں (optional)"
               value={newNameUrdu}
               onChange={(e) => setNewNameUrdu(e.target.value)}
-              required
             />
           </div>
+
           <div className="form-group">
             <label className="form-label" htmlFor="cat-rate">Rate (Rs) *</label>
             <input
