@@ -1,90 +1,96 @@
 export const getWelcomeEmailTemplate = (name: string): string => {
-  return `
+    return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to TrustFarokht</title>
+    <title>Welcome to RaddiGo</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7fa;">
-    <table role="presentation" style="width: 100%; border-collapse: collapse;">
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; color: #1e293b;">
+    <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #f8fafc; padding: 40px 0;">
         <tr>
-            <td align="center" style="padding: 40px 0;">
-                <table role="presentation" style="width: 600px; border-collapse: collapse; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+            <td align="center">
+                <table role="presentation" style="width: 100%; max-width: 580px; border-collapse: collapse; background-color: #ffffff; border-radius: 20px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); overflow: hidden; border: 1px solid #e2e8f0; margin: 20px 10px;">
+                    
                     <!-- Header -->
                     <tr>
-                        <td style="padding: 40px 40px 30px 40px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px 8px 0 0;">
-                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600;">Welcome to TrustFarokht! 🎉</h1>
+                        <td style="padding: 40px 40px 32px 40px; text-align: center; background: linear-gradient(135deg, #059669 0%, #10b981 100%);">
+                            <div style="display: inline-block; background-color: rgba(255, 255, 255, 0.2); padding: 8px 18px; border-radius: 50px; margin-bottom: 12px; backdrop-filter: blur(4px);">
+                                <span style="color: #ffffff; font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;">Welcome Aboard</span>
+                            </div>
+                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 800; tracking-tight: -0.5px;">Welcome to RaddiGo! 🎉</h1>
                         </td>
                     </tr>
                     
-                    <!-- Content -->
+                    <!-- Main Body Content -->
                     <tr>
-                        <td style="padding: 40px;">
-                            <h2 style="margin: 0 0 20px 0; color: #333333; font-size: 24px; font-weight: 600;">Hello ${name},</h2>
+                        <td style="padding: 36px 36px 28px 36px;">
+                            <h2 style="margin: 0 0 14px 0; color: #0f172a; font-size: 22px; font-weight: 700;">Assalam-o-Alaikum ${name},</h2>
                             
-                            <p style="margin: 0 0 20px 0; color: #666666; font-size: 16px; line-height: 1.6;">
-                                We're thrilled to have you join the TrustFarokht community! You've taken the first step towards a more secure and trustworthy experience.
+                            <p style="margin: 0 0 24px 0; color: #475569; font-size: 15px; line-height: 1.6;">
+                                We're thrilled to have you join the <strong>RaddiGo</strong> family! Selling your household scrap (raddi) at market rates is now faster, easier, and 100% digital.
                             </p>
                             
-                            <p style="margin: 0 0 30px 0; color: #666666; font-size: 16px; line-height: 1.6;">
-                                Here's what you can do next:
+                            <p style="margin: 0 0 20px 0; color: #0f172a; font-size: 16px; font-weight: 700;">
+                                Here is what you can do with RaddiGo:
                             </p>
                             
-                            <!-- Feature Cards -->
-                            <table role="presentation" style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+                            <!-- Feature Card 1 -->
+                            <table role="presentation" style="width: 100%; border-collapse: collapse; margin-bottom: 16px;">
                                 <tr>
-                                    <td style="padding: 20px; background-color: #f8f9fa; border-radius: 6px; border-left: 4px solid #667eea;">
-                                        <h3 style="margin: 0 0 10px 0; color: #333333; font-size: 16px; font-weight: 600;">✨ Complete Your Profile</h3>
-                                        <p style="margin: 0; color: #666666; font-size: 14px; line-height: 1.5;">
-                                            Add your details to personalize your experience
+                                    <td style="padding: 18px 20px; background-color: #ecfdf5; border-radius: 14px; border-left: 4px solid #059669;">
+                                        <h3 style="margin: 0 0 6px 0; color: #065f46; font-size: 15px; font-weight: 700;">📦 Request Doorstep Scrap Pickup</h3>
+                                        <p style="margin: 0; color: #047857; font-size: 13px; line-height: 1.5;">
+                                            Book a pickup for paper, plastic, metal & electronics right from your doorstep.
                                         </p>
                                     </td>
                                 </tr>
                             </table>
                             
-                            <table role="presentation" style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+                            <!-- Feature Card 2 -->
+                            <table role="presentation" style="width: 100%; border-collapse: collapse; margin-bottom: 16px;">
                                 <tr>
-                                    <td style="padding: 20px; background-color: #f8f9fa; border-radius: 6px; border-left: 4px solid #764ba2;">
-                                        <h3 style="margin: 0 0 10px 0; color: #333333; font-size: 16px; font-weight: 600;">🔒 Secure Your Account</h3>
-                                        <p style="margin: 0; color: #666666; font-size: 14px; line-height: 1.5;">
-                                            Enable two-factor authentication for extra security
+                                    <td style="padding: 18px 20px; background-color: #ecfdf5; border-radius: 14px; border-left: 4px solid #10b981;">
+                                        <h3 style="margin: 0 0 6px 0; color: #065f46; font-size: 15px; font-weight: 700;">💰 Instant Wallet Credit</h3>
+                                        <p style="margin: 0; color: #047857; font-size: 13px; line-height: 1.5;">
+                                            Get instant, seamless payment credited directly to your RaddiGo Wallet upon pickup completion.
                                         </p>
                                     </td>
                                 </tr>
                             </table>
                             
-                            <table role="presentation" style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+                            <!-- Feature Card 3 -->
+                            <table role="presentation" style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
                                 <tr>
-                                    <td style="padding: 20px; background-color: #f8f9fa; border-radius: 6px; border-left: 4px solid #667eea;">
-                                        <h3 style="margin: 0 0 10px 0; color: #333333; font-size: 16px; font-weight: 600;">🚀 Get Started</h3>
-                                        <p style="margin: 0; color: #666666; font-size: 14px; line-height: 1.5;">
-                                            Explore our features and start your journey
+                                    <td style="padding: 18px 20px; background-color: #ecfdf5; border-radius: 14px; border-left: 4px solid #059669;">
+                                        <h3 style="margin: 0 0 6px 0; color: #065f46; font-size: 15px; font-weight: 700;">📍 Real-Time Live Tracking</h3>
+                                        <p style="margin: 0; color: #047857; font-size: 13px; line-height: 1.5;">
+                                            Track your assigned scrap collector's live location on the map in real-time.
                                         </p>
                                     </td>
                                 </tr>
                             </table>
                             
-                            <p style="margin: 0 0 20px 0; color: #666666; font-size: 16px; line-height: 1.6;">
-                                If you have any questions or need assistance, our support team is always here to help.
+                            <p style="margin: 0 0 24px 0; color: #475569; font-size: 14px; line-height: 1.6;">
+                                If you have any questions or need help setting up, our support team is always here for you.
                             </p>
                             
-                            <p style="margin: 0; color: #666666; font-size: 16px; line-height: 1.6;">
-                                Best regards,<br>
-                                <strong style="color: #333333;">The TrustFarokht Team</strong>
+                            <p style="margin: 0; color: #475569; font-size: 14px; line-height: 1.6;">
+                                Warm regards,<br>
+                                <strong style="color: #0f172a; font-size: 15px;">The RaddiGo Team</strong>
                             </p>
                         </td>
                     </tr>
                     
                     <!-- Footer -->
                     <tr>
-                        <td style="padding: 30px 40px; background-color: #f8f9fa; border-radius: 0 0 8px 8px; text-align: center;">
-                            <p style="margin: 0 0 10px 0; color: #999999; font-size: 12px;">
-                                © ${new Date().getFullYear()} TrustFarokht. All rights reserved.
+                        <td style="padding: 24px 36px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; text-align: center;">
+                            <p style="margin: 0 0 6px 0; color: #94a3b8; font-size: 12px; font-weight: 600;">
+                                © ${new Date().getFullYear()} RaddiGo App. All rights reserved.
                             </p>
-                            <p style="margin: 0; color: #999999; font-size: 12px;">
-                                You're receiving this email because you signed up for TrustFarokht.
+                            <p style="margin: 0; color: #cbd5e1; font-size: 11px;">
+                                You are receiving this email because you created an account on RaddiGo.
                             </p>
                         </td>
                     </tr>
