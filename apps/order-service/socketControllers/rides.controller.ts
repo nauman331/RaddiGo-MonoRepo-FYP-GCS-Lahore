@@ -410,6 +410,81 @@ export const setupRidesController = () => {
         }
     });
 
+    // ── Direct Accept Order (Collector accepts without bidding) ─
+    /**
+     * Event: acceptRaddiOrder / acceptOrder
+     * From: Collector
+     * Data: { orderId?, customerId, collectorId, price? }
+     *
+     * Directly assigns the collector to a pending order and updates status to 'accepted'.
+     */
+    const handleDirectAcceptOrder = async (message: any) => {
+        try {
+            const data = message.data || {};
+            const socketId = message._socketId;
+
+            let orderId = Number(data.orderId || data.order_id);
+            const collectorId = Number(data.collectorId || data.userId || data.collector_id || data.user_id);
+            const customerId = Number(data.customerId || data.customer_id);
+
+            if (!collectorId) {
+                return sendToSocket(socketId, "error", { message: "collectorId required to accept order" });
+            }
+
+            // If orderId was not passed, find latest pending order for this customer
+            if (!orderId && customerId) {
+                const [rows] = await pool.query<RowDataPacket[]>(
+                    `SELECT id FROM orders WHERE customerId = ? AND status = 'pending' ORDER BY createdAt DESC LIMIT 1`,
+                    [customerId]
+                );
+                orderId = (rows as any)[0]?.id;
+            }
+
+            if (!orderId) {
+                return sendToSocket(socketId, "error", { message: "orderId required or no pending order found for customer" });
+            }
+
+            const order = await getOrder(orderId);
+            if (!order) return sendToSocket(socketId, "error", { message: "Order not found" });
+            if (!['pending', 'bidding'].includes(order.status)) {
+                return sendToSocket(socketId, "error", { message: `Cannot accept order with status: ${order.status}` });
+            }
+
+            const finalPrice = Number(data.price || data.expectedPrice || order.expectedPrice || 0);
+
+            // Update order in MySQL DB
+            await pool.execute(
+                `UPDATE orders SET status = 'accepted', collectorId = ?, finalPrice = ? WHERE id = ?`,
+                [collectorId, finalPrice, orderId]
+            );
+
+            const acceptedPayload = {
+                orderId,
+                collectorId,
+                customerId: order.customerId,
+                finalPrice,
+                status: 'accepted',
+                message: 'Order accepted directly by collector.',
+            };
+
+            // Notify Customer
+            sendToRoom(String(order.customerId), "bidAccepted", acceptedPayload);
+            sendToRoom(String(order.customerId), "orderAccepted", acceptedPayload);
+
+            // Notify Collector socket
+            sendToSocket(socketId, "acceptOrderConfirmed", acceptedPayload);
+            sendToSocket(socketId, "bidAcceptConfirmed", acceptedPayload);
+
+            console.log(`[Order #${orderId}] Directly accepted by Collector #${collectorId} — Status: accepted`);
+        } catch (error) {
+            console.error("[handleDirectAcceptOrder] Error:", error);
+            sendToSocket(message._socketId, "error", { message: `Direct accept failed: ${error}` });
+        }
+    };
+
+    on("acceptRaddiOrder", handleDirectAcceptOrder);
+    on("acceptOrder", handleDirectAcceptOrder);
+
 
     // ── Reject Bid ────────────────────────────────────────────
     /**
@@ -712,80 +787,125 @@ export const setupRidesController = () => {
      */
     on("completeOrder", async (message: any) => {
         try {
-            const data = message.data;
+            const data = message.data || {};
             const socketId = message._socketId;
 
-            if (!data?.orderId || !data.collectorId) {
-                return sendToSocket(socketId, "error", { message: "orderId and collectorId required" });
+            const orderId = Number(data.orderId || data.order_id);
+            const collectorId = Number(data.collectorId || data.userId || data.collector_id || data.user_id);
+            const actualRaddiInKg = data.actualRaddiInKg || data.weight || data.raddiInKg ? Number(data.actualRaddiInKg || data.weight || data.raddiInKg) : null;
+
+            if (!orderId) {
+                return sendToSocket(socketId, "error", { message: "orderId required for completeOrder" });
             }
 
-            const order = await getOrder(data.orderId);
+            const order = await getOrder(orderId);
             if (!order) return sendToSocket(socketId, "error", { message: "Order not found" });
-            if (order.status !== 'in_progress') {
-                return sendToSocket(socketId, "error", {
-                    message: `Cannot complete order with status: ${order.status}`
-                });
-            }
-            if (order.collectorId !== data.collectorId) {
-                return sendToSocket(socketId, "error", { message: "You are not the assigned collector" });
-            }
-            if (!order.finalPrice || order.finalPrice <= 0) {
-                return sendToSocket(socketId, "error", { message: "Order has no agreed final price" });
-            }
 
-            // ── Atomic Wallet Transfer ────────────────────────
-            const transferResult = await internalWalletTransfer(
-                data.collectorId,     // from: collector pays
-                order.customerId,     // to: customer receives
-                Number(order.finalPrice),
-                data.orderId,
-                `Scrap pickup payment for Order #${data.orderId}`
-            );
-
-            if (!transferResult.success) {
-                return sendToSocket(socketId, "orderCompleteFailed", {
-                    success: false,
-                    message: transferResult.error || 'Wallet transfer failed',
-                    orderId: data.orderId,
+            if (order.status === 'completed') {
+                return sendToSocket(socketId, "orderCompletedConfirmed", {
+                    success: true,
+                    orderId,
+                    finalPrice: order.finalPrice || 0,
+                    message: `Order #${orderId} is already completed.`
                 });
             }
 
-            // Update order status
-            const updateData: any[] = ['completed'];
-            let updateSql = `UPDATE orders SET status = ?`;
-            if (data.actualRaddiInKg) {
+            // Auto-assign collectorId if missing
+            const activeCollectorId = collectorId || Number(order.collectorId);
+            if (activeCollectorId && !order.collectorId) {
+                await pool.execute(`UPDATE orders SET collectorId = ? WHERE id = ?`, [activeCollectorId, orderId]);
+            }
+
+            // Auto-infer finalPrice if missing
+            let finalPrice = Number(order.finalPrice || 0);
+            if (!finalPrice || finalPrice <= 0) {
+                // Try fetching latest bid from order_bids
+                const [bids] = await pool.query<RowDataPacket[]>(
+                    `SELECT bid_amount FROM order_bids WHERE order_id = ? ORDER BY id DESC LIMIT 1`,
+                    [orderId]
+                );
+                if ((bids as any[])[0]?.bid_amount) {
+                    finalPrice = Number((bids as any)[0].bid_amount);
+                } else if (order.expectedPrice) {
+                    finalPrice = Number(order.expectedPrice);
+                }
+            }
+
+            // ── Wallet Transfer (if finalPrice > 0 and activeCollectorId exists) ──
+            let walletTransferred = false;
+            let walletNote = "";
+
+            if (finalPrice > 0 && activeCollectorId && Number(order.customerId)) {
+                const transferResult = await internalWalletTransfer(
+                    activeCollectorId,
+                    Number(order.customerId),
+                    finalPrice,
+                    orderId,
+                    `Scrap payment for Order #${orderId}`
+                );
+
+                if (transferResult.success) {
+                    walletTransferred = true;
+                    walletNote = `PKR ${finalPrice} scrap payment processed.`;
+                } else {
+                    console.warn(`[Order #${orderId}] Wallet transfer note: ${transferResult.error}`);
+                    walletNote = `Order completed. Wallet transfer notice: ${transferResult.error}`;
+                }
+            } else {
+                walletNote = `Order completed successfully.`;
+            }
+
+            // Update order status in DB
+            const updateData: any[] = ['completed', finalPrice];
+            let updateSql = `UPDATE orders SET status = ?, finalPrice = ?`;
+            if (activeCollectorId) {
+                updateSql += `, collectorId = ?`;
+                updateData.push(activeCollectorId);
+            }
+            if (actualRaddiInKg && !isNaN(actualRaddiInKg)) {
                 updateSql += `, approximateRaddiInKg = ?`;
-                updateData.push(data.actualRaddiInKg);
+                updateData.push(actualRaddiInKg);
             }
             updateSql += ` WHERE id = ?`;
-            updateData.push(data.orderId);
+            updateData.push(orderId);
             await pool.execute(updateSql, updateData);
 
-            // WS + Push notifications
-            sendToRoom(String(order.customerId), "orderCompleted", {
-                orderId: data.orderId,
-                finalPrice: order.finalPrice,
-                walletCredited: order.finalPrice,
-                message: `Order completed! PKR ${order.finalPrice} has been added to your wallet.`,
-            });
-            sendPushToUser(
-                order.customerId,
-                PushNotifications.orderCompleted(Number(order.finalPrice), data.orderId)
-            ).catch(() => {});
-
-            sendToSocket(socketId, "orderCompletedConfirmed", {
+            const completionPayload = {
                 success: true,
-                orderId: data.orderId,
-                finalPrice: order.finalPrice,
-                message: `Order completed. PKR ${order.finalPrice} debited from your wallet.`,
-            });
+                orderId,
+                finalPrice,
+                walletTransferred,
+                message: `Order #${orderId} completed! ${walletNote}`,
+            };
 
-            console.log(`[Order #${data.orderId}] Completed. PKR ${order.finalPrice} transferred: Collector #${data.collectorId} → Customer #${order.customerId}`);
-        } catch (error) {
+            // Broadcast to Customer (WS + Push)
+            if (order.customerId) {
+                sendToRoom(String(order.customerId), "orderCompleted", completionPayload);
+                sendToRoom(String(order.customerId), "order_completed", completionPayload);
+                sendPushToUser(
+                    Number(order.customerId),
+                    PushNotifications.orderCompleted(finalPrice, orderId)
+                ).catch(() => {});
+            }
+
+            // Broadcast to Collector (WS + Push)
+            if (activeCollectorId) {
+                sendToRoom(String(activeCollectorId), "orderCompleted", completionPayload);
+                sendToRoom(String(activeCollectorId), "order_completed", completionPayload);
+                sendToRoom(String(activeCollectorId), "orderCompletedConfirmed", completionPayload);
+            }
+
+            sendToSocket(socketId, "orderCompletedConfirmed", completionPayload);
+            sendToSocket(socketId, "completeOrderConfirmed", completionPayload);
+
+            console.log(`[Order #${orderId}] Completed successfully — status set to completed in DB!`);
+        } catch (error: any) {
             console.error("[completeOrder] Error:", error);
-            sendToSocket(message._socketId, "error", { message: `Complete order failed: ${error}` });
+            sendToSocket(message._socketId, "error", { message: `Complete order failed: ${error.message}` });
         }
     });
+
+
 
     // ── Cancel Order ──────────────────────────────────────────
     /**

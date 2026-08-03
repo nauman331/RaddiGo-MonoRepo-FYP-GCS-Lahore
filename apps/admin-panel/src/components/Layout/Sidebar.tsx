@@ -21,11 +21,11 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { path: '/dashboard', label: 'Dashboard',    icon: <LayoutDashboard size={20} /> },
-  { path: '/users',     label: 'Users',        icon: <UsersIcon size={20} /> },
-  { path: '/wallets',   label: 'Wallets',      icon: <Wallet size={20} /> },
-  { path: '/pending',   label: 'Pending Txns', icon: <Clock size={20} /> },
-  { path: '/categories',label: 'Categories',   icon: <FolderOpen size={20} /> },
+  { path: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
+  { path: '/users', label: 'Users', icon: <UsersIcon size={20} /> },
+  { path: '/wallets', label: 'Wallets', icon: <Wallet size={20} /> },
+  { path: '/pending', label: 'Pending Txns', icon: <Clock size={20} /> },
+  { path: '/categories', label: 'Categories', icon: <FolderOpen size={20} /> },
 ];
 
 interface SidebarProps {
@@ -87,17 +87,6 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
                 ADMIN PANEL
               </div>
             </div>
-          </div>
-        )}
-        {collapsed && (
-          <div style={{
-            width: 36, height: 36,
-            background: 'linear-gradient(135deg, var(--accent), #00a850)',
-            borderRadius: 10,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '1.2rem',
-          }}>
-            <Recycle size={22} color="#080810" strokeWidth={2.5} />
           </div>
         )}
         <button

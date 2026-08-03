@@ -27,9 +27,16 @@ export const getMyOrders = async (req: Request): Promise<Response> => {
         let whereClause = 'WHERE o.customerId = ?';
         const params: any[] = [customerId];
 
-        if (status) {
-            whereClause += ' AND o.status = ?';
-            params.push(status);
+        if (status && status !== 'all') {
+            if (status === 'active') {
+                whereClause += ` AND o.status IN ('accepted', 'in_progress', 'completed')`;
+            } else {
+                const statuses = status.split(',').map((s) => s.trim()).filter(Boolean);
+                if (statuses.length > 0) {
+                    whereClause += ` AND o.status IN (${statuses.map(() => '?').join(',')})`;
+                    params.push(...statuses);
+                }
+            }
         }
 
         const [countRows] = await pool.query<RowDataPacket[]>(
@@ -102,10 +109,18 @@ export const getMyPickups = async (req: Request): Promise<Response> => {
         let whereClause = 'WHERE o.collectorId = ?';
         const params: any[] = [collectorId];
 
-        if (status) {
-            whereClause += ' AND o.status = ?';
-            params.push(status);
+        if (status && status !== 'all') {
+            if (status === 'active') {
+                whereClause += ` AND o.status IN ('accepted', 'in_progress', 'completed')`;
+            } else {
+                const statuses = status.split(',').map((s) => s.trim()).filter(Boolean);
+                if (statuses.length > 0) {
+                    whereClause += ` AND o.status IN (${statuses.map(() => '?').join(',')})`;
+                    params.push(...statuses);
+                }
+            }
         }
+
 
         const [countRows] = await pool.query<RowDataPacket[]>(
             `SELECT COUNT(*) as total FROM orders o ${whereClause}`,
