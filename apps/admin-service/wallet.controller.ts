@@ -75,14 +75,23 @@ export const adminApprove = async (req: Request): Promise<Response> => {
         );
 
         if (tx.type === 'deposit') {
-            await conn.execute("UPDATE wallets SET balance = balance + ? WHERE user_id = ?", [tx.amount, tx.user_id]);
+            await conn.execute(
+                `INSERT INTO wallets (user_id, balance) VALUES (?, ?) 
+                 ON DUPLICATE KEY UPDATE balance = balance + ?`,
+                [tx.user_id, tx.amount, tx.amount]
+            );
         } else {
-            await conn.execute("UPDATE wallets SET balance = balance - ? WHERE user_id = ?", [tx.amount, tx.user_id]);
+            await conn.execute(
+                `INSERT INTO wallets (user_id, balance) VALUES (?, 0) 
+                 ON DUPLICATE KEY UPDATE balance = GREATEST(0, balance - ?)`,
+                [tx.user_id, tx.amount]
+            );
         }
 
         await conn.commit();
         await redis.del(`user:${tx.user_id}`);
-        return Response.json({ message: 'Transaction approved' }, { status: 200 });
+        await redis.del(`wallet:${tx.user_id}`);
+        return Response.json({ message: 'Transaction approved and wallet balance updated automatically' }, { status: 200 });
     } catch (err) {
         await conn.rollback();
         console.error(err);
