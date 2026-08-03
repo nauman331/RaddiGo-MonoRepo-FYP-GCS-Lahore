@@ -408,4 +408,28 @@ const adminLogin = async (req: Request): Promise<Response> => {
     }
 };
 
-export { register, login, verifyEmail, resendVerificationEmail, getMe, deleteMe, resetPassword, doGoogleLogin, updateProfile, adminLogin };
+const updateFcmToken = async (req: Request): Promise<Response> => {
+    try {
+        const user = (req as any).user;
+        if (!user) return Response.json({ message: 'Unauthorized' }, { status: 401 });
+
+        const body = await safeParseJSON<{ fcmToken: string }>(req);
+        if (!body?.fcmToken) {
+            return Response.json({ message: 'fcmToken is required' }, { status: 400 });
+        }
+
+        await pool.execute(
+            `UPDATE users SET fcmToken = ? WHERE id = ?`,
+            [body.fcmToken, user.userId]
+        );
+        // Invalidate Redis cache
+        await redis.del(`user:${user.userId}`);
+
+        return Response.json({ message: 'FCM token updated successfully' }, { status: 200 });
+    } catch (error) {
+        console.error('updateFcmToken error:', error);
+        return Response.json({ message: 'Failed to update FCM token' }, { status: 500 });
+    }
+};
+
+export { register, login, verifyEmail, resendVerificationEmail, getMe, deleteMe, resetPassword, doGoogleLogin, updateProfile, adminLogin, updateFcmToken };

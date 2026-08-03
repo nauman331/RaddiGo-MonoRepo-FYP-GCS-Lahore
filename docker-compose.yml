@@ -20,7 +20,7 @@ services:
       admin-service:
         condition: service_healthy
 
-  # Auth Service
+  # ── Auth Service ───────────────────────────────────────────
   auth-service:
     build:
       context: .
@@ -50,18 +50,25 @@ services:
       - NODEMAILER_USER=${NODEMAILER_USER}
       - NODEMAILER_HOST=${NODEMAILER_HOST}
       - NODEMAILER_PORT=${NODEMAILER_PORT}
+      - NODEMAILER_FROM_EMAIL=${NODEMAILER_FROM_EMAIL}
     env_file:
       - .env
     networks:
       - raddigo-network
     restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "bun", "-e", "fetch('http://localhost:3002/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
       timeout: 10s
-      retries: 3
+      retries: 5
+      start_period: 30s
 
-  # Category Service
+  # ── Category Service ───────────────────────────────────────
   category-service:
     build:
       context: .
@@ -89,13 +96,19 @@ services:
     networks:
       - raddigo-network
     restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "bun", "-e", "fetch('http://localhost:3003/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
       timeout: 10s
-      retries: 3
+      retries: 5
+      start_period: 30s
 
-  # Order Service
+  # ── Order Service ──────────────────────────────────────────
   order-service:
     build:
       context: .
@@ -106,6 +119,8 @@ services:
       - "3004:3004"
     volumes:
       - ./apps/order-service:/app/apps/order-service
+      - ./apps/ThirdPartyservices:/app/apps/ThirdPartyservices
+      - ./apps/utils:/app/apps/utils
       - ./packages:/app/packages
       - /app/node_modules
     environment:
@@ -118,7 +133,7 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_SSL_MODE=${DB_SSL_MODE}
       - REDIS_URL=redis://redis:6379
-      - RADIUS_KM=${RADIUS_KM}
+      - RADIUS_KM=${RADIUS_KM:-5}
       - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}
       - FIREBASE_CLIENT_EMAIL=${FIREBASE_CLIENT_EMAIL}
       - FIREBASE_PRIVATE_KEY=${FIREBASE_PRIVATE_KEY}
@@ -127,13 +142,19 @@ services:
     networks:
       - raddigo-network
     restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "bun", "-e", "fetch('http://localhost:3004/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
       timeout: 10s
-      retries: 3
+      retries: 5
+      start_period: 30s
 
-  # Admin Service
+  # ── Admin Service ──────────────────────────────────────────
   admin-service:
     build:
       context: .
@@ -163,13 +184,19 @@ services:
     networks:
       - raddigo-network
     restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "bun", "-e", "fetch('http://localhost:8000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
       timeout: 10s
-      retries: 3
+      retries: 5
+      start_period: 30s
 
-  # MySQL Database
+  # ── MySQL Database ─────────────────────────────────────────
   mysql:
     image: mysql:8.0
     container_name: raddigo-mysql
@@ -177,20 +204,34 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
       MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_ROOT_HOST: '%'
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
       - raddigo-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
-  # Redis (in-memory cache)
+  # ── Redis ──────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
     container_name: raddigo-redis
     restart: unless-stopped
+    command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
     networks:
       - raddigo-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
 
 networks:
   raddigo-network:

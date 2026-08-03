@@ -4,6 +4,8 @@ import { userMigration } from './migrations/user.migration';
 import { categoriesMigration } from './migrations/categories.migration';
 import { ordersMigration } from './migrations/orders.migration';
 import { walletMigration } from './migrations/wallet.migration';
+import { orderBidsMigration } from './migrations/order_bids.migration';
+import { chatsMigration } from './migrations/chats.migration';
 
 const parseBool = (v?: string) => (v === 'true' ? true : v === 'false' ? false : undefined);
 
@@ -28,16 +30,27 @@ const dbConfig = {
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
     ssl: buildSslConfig(),
+    // Connection pool settings for production
+    connectionLimit: 20,
+    queueLimit: 0,
+    waitForConnections: true,
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 10000,
 };
 
 const pool = mysql.createPool(dbConfig as any);
 
 async function runMigrations(poolInstance: any) {
-    // run in dependency order: users -> categories -> orders
+    // Run in strict dependency order:
+    // users (base) → categories (base) → orders (FK: users, categories)
+    // → wallets + wallet_transactions (FK: users) 
+    // → order_bids (FK: orders, users) → chats (FK: orders, users)
     await userMigration(poolInstance);
     await categoriesMigration(poolInstance);
     await ordersMigration(poolInstance);
-    await walletMigration(poolInstance)
+    await walletMigration(poolInstance);
+    await orderBidsMigration(poolInstance);
+    await chatsMigration(poolInstance);
 }
 
 export async function connectDB(retries = 10, delay = 3000) {
@@ -54,7 +67,7 @@ export async function connectDB(retries = 10, delay = 3000) {
             // run migrations once DB is available
             await runMigrations(pool);
 
-            console.log('MySQL database connected and migrations applied');
+            console.log('✓ MySQL connected and all migrations applied');
             return pool;
         } catch (err: any) {
             console.error(`DB connect attempt ${attempt}/${retries} failed:`, err.message || err);

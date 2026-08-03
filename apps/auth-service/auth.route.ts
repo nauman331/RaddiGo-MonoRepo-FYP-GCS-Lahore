@@ -64,4 +64,15 @@ export const AuthRoutes = {
     '/auth/api/v1/admin-login': {
         POST: async (req: Request) => await AuthController.adminLogin(req),
     },
+    '/auth/api/v1/me/fcm-token': {
+        PUT: async (req: Request) => {
+            const authResult = await authMiddleware(req);
+            if (!authResult.authorized) {
+                return new Response(authResult.error || 'Unauthorized', { status: 401 });
+            }
+            (req as any).user = authResult.user;
+            return await AuthController.updateFcmToken(req);
+        },
+    },
 }
+
