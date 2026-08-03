@@ -14,7 +14,7 @@ const allStaticRoutes = {
 
 const server = Bun.serve({
     port: PORTS.ADMIN || 8000,
-    hostname: "0.0.0.0",
+    // hostname: "0.0.0.0",
     fetch: async (req: Request) => {
         try {
             const url = new URL(req.url);
