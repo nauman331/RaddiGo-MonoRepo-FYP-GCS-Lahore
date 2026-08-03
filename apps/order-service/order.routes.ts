@@ -17,7 +17,14 @@ export const OrderRoutes: Record<string, Record<string, (req: Request) => Promis
     '/order/api/v1/available': {
         GET: (req) => OrderController.getAvailableOrders(req),
     },
+    '/order/api/v1/create': {
+        POST: (req) => OrderController.createOrderHTTP(req),
+    },
+    '/order/api/v1/orders': {
+        POST: (req) => OrderController.createOrderHTTP(req),
+    },
 };
+
 
 /**
  * Handles dynamic routes like /order/api/v1/:id and /order/api/v1/:id/cancel

@@ -318,3 +318,59 @@ export const getOrderMessages = async (req: Request, orderId: number): Promise<R
     }
 };
 
+/** POST /order/api/v1/create & POST /order/api/v1/orders — Create order via HTTP REST */
+export const createOrderHTTP = async (req: Request): Promise<Response> => {
+    const authResult = await authMiddleware(req);
+    if (!authResult.authorized) return Response.json({ message: authResult.error || 'Unauthorized' }, { status: 401 });
+
+    try {
+        const body = await req.json().catch(() => ({})) as any;
+        const customerId = Number(body.customerId || body.userId || body.customer_id || body.user_id || authResult.user.userId);
+        const categoryId = body.categoryId || body.category_id || body.category ? Number(body.categoryId || body.category_id || body.category) : null;
+        const lat = Number(body.pickupLatitude ?? body.latitude ?? body.lat ?? body.pickup_latitude);
+        const lng = Number(body.pickupLongitude ?? body.longitude ?? body.lng ?? body.long ?? body.pickup_longitude);
+        const address = String(body.pickupAddress || body.address || body.pickup_address || "Pickup Address");
+        const weight = Number(body.approximateRaddiInKg ?? body.raddiInKg ?? body.approximateRaddi ?? body.weight ?? body.weightInKg ?? 1);
+        const expectedPrice = (body.expectedPrice ?? body.price ?? body.expected_price) ? Number(body.expectedPrice ?? body.price ?? body.expected_price) : null;
+        const scheduleTime = body.scheduleTime || body.schedule_time ? new Date(body.scheduleTime || body.schedule_time) : new Date();
+
+        if (!customerId || isNaN(lat) || isNaN(lng)) {
+            return Response.json({ message: "Missing required fields: pickupLatitude and pickupLongitude required" }, { status: 400 });
+        }
+
+        const [insertResult] = await pool.execute<any>(
+            `INSERT INTO orders 
+             (customerId, categoryId, pickupLatitude, pickupLongitude, 
+              pickupAddress, scheduleTime, approximateRaddiInKg, expectedPrice, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+            [customerId, categoryId, lat, lng, address, scheduleTime, weight, expectedPrice]
+        );
+
+        const orderId = insertResult.insertId;
+
+        console.log(`[HTTP REST] Order #${orderId} created successfully by Customer #${customerId}`);
+
+        return Response.json({
+            success: true,
+            message: "Order created successfully",
+            orderId,
+            order: {
+                id: orderId,
+                customerId,
+                categoryId,
+                pickupLatitude: lat,
+                pickupLongitude: lng,
+                pickupAddress: address,
+                scheduleTime: scheduleTime.toISOString(),
+                approximateRaddiInKg: weight,
+                expectedPrice,
+                status: 'pending'
+            }
+        }, { status: 201 });
+    } catch (err: any) {
+        console.error('createOrderHTTP error:', err);
+        return Response.json({ message: 'Failed to create order', error: err.message }, { status: 500 });
+    }
+};
+
+

@@ -106,27 +106,29 @@ export const setupRidesController = () => {
      * Creates order in DB, finds nearby drivers, broadcasts newOrderAvailable to each.
      * Customer joins their personal room (customerId) for receiving bid notifications.
      */
-    on("createOrder", async (message: any) => {
+    // ── Create Order Handler (Shared for createOrder, makeRaddiOrder, create_order) ──
+    const handleOrderCreation = async (message: any) => {
         try {
-            const data = message.data;
+            const data = message.data || {};
             const socketId = message._socketId;
             const ws = message._ws;
 
-            if (
-                data.customerId === undefined ||
-                data.pickupLatitude === undefined ||
-                data.pickupLongitude === undefined ||
-                !data.pickupAddress ||
-                !data.approximateRaddiInKg
-            ) {
-                return sendToSocket(socketId, "error", { message: "Missing required order fields" });
-            }
+            const customerId = Number(data.customerId || data.userId || data.customer_id || data.user_id);
+            const categoryId = data.categoryId || data.category_id || data.category ? Number(data.categoryId || data.category_id || data.category) : null;
+            const lat = Number(data.pickupLatitude ?? data.latitude ?? data.lat ?? data.pickup_latitude);
+            const lng = Number(data.pickupLongitude ?? data.longitude ?? data.lng ?? data.long ?? data.pickup_longitude);
+            const address = String(data.pickupAddress || data.address || data.pickup_address || "Pickup Address");
+            const weight = Number(data.approximateRaddiInKg ?? data.raddiInKg ?? data.approximateRaddi ?? data.weight ?? data.weightInKg ?? 1);
+            const expectedPrice = (data.expectedPrice ?? data.price ?? data.expected_price) ? Number(data.expectedPrice ?? data.price ?? data.expected_price) : null;
+            const scheduleTime = data.scheduleTime || data.schedule_time ? new Date(data.scheduleTime || data.schedule_time) : new Date();
 
-            const scheduleTime = data.scheduleTime ? new Date(data.scheduleTime) : new Date();
+            if (!customerId || isNaN(lat) || isNaN(lng)) {
+                return sendToSocket(socketId, "error", { message: "Missing required order fields: customerId, pickupLatitude, pickupLongitude" });
+            }
 
             // Join customer's room for bid notifications
             if (ws) {
-                joinRoom(socketId, String(data.customerId));
+                joinRoom(socketId, String(customerId));
             }
 
             const [insertResult] = await pool.execute<ResultSetHeader>(
@@ -135,36 +137,33 @@ export const setupRidesController = () => {
                   pickupAddress, scheduleTime, approximateRaddiInKg, expectedPrice, status)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
                 [
-                    data.customerId,
-                    data.categoryId || null,
-                    data.pickupLatitude,
-                    data.pickupLongitude,
-                    data.pickupAddress,
+                    customerId,
+                    categoryId,
+                    lat,
+                    lng,
+                    address,
                     scheduleTime,
-                    data.approximateRaddiInKg,
-                    data.expectedPrice || null
+                    weight,
+                    expectedPrice
                 ]
             );
             const orderId = (insertResult as ResultSetHeader).insertId;
 
             // Find nearby collectors
-            const radiusKm = parseInt(process.env.RADIUS_KM || '5');
-            const nearbyDrivers = await NearbyDrivers(
-                data.pickupLatitude,
-                data.pickupLongitude,
-                radiusKm
-            );
+            const radiusKm = parseInt(process.env.RADIUS_KM || '10');
+            const nearbyDrivers = await NearbyDrivers(lat, lng, radiusKm);
 
             const orderBroadcast = {
                 orderId,
-                customerId: data.customerId,
-                pickupLatitude: data.pickupLatitude,
-                pickupLongitude: data.pickupLongitude,
-                pickupAddress: data.pickupAddress,
-                approximateRaddiInKg: data.approximateRaddiInKg,
-                expectedPrice: data.expectedPrice || null,
-                categoryId: data.categoryId || null,
+                customerId,
+                pickupLatitude: lat,
+                pickupLongitude: lng,
+                pickupAddress: address,
+                approximateRaddiInKg: weight,
+                expectedPrice,
+                categoryId,
                 scheduleTime: scheduleTime.toISOString(),
+                status: 'pending'
             };
 
             if (nearbyDrivers.length > 0) {
@@ -176,31 +175,36 @@ export const setupRidesController = () => {
                 });
 
                 // Push notification (offline/background drivers)
-                const pushPayload = PushNotifications.newOrderAvailable(
-                    orderId,
-                    data.pickupAddress,
-                    data.approximateRaddiInKg
-                );
+                const pushPayload = PushNotifications.newOrderAvailable(orderId, address, weight);
                 sendPushToUsers(driverIds, pushPayload).catch((e) =>
                     console.error('[Push] newOrder batch error:', e)
                 );
             }
 
-            console.log(`[Order #${orderId}] Created — ${nearbyDrivers.length} nearby drivers notified`);
+            console.log(`[Order #${orderId}] Created by Customer #${customerId} — ${nearbyDrivers.length} nearby drivers notified`);
 
-            sendToSocket(socketId, "orderCreated", {
+            const responsePayload = {
                 success: true,
                 orderId,
                 nearbyDriverCount: nearbyDrivers.length,
+                order: orderBroadcast,
                 message: nearbyDrivers.length > 0
                     ? `Order created. ${nearbyDrivers.length} collectors notified.`
-                    : 'Order created. No collectors nearby at the moment — they will be notified as they come online.'
-            });
+                    : 'Order created. Searching for nearby collectors.'
+            };
+
+            sendToSocket(socketId, "orderCreated", responsePayload);
+            sendToSocket(socketId, "makeRaddiOrderConfirmed", responsePayload);
         } catch (error) {
             console.error("[createOrder] Error:", error);
             sendToSocket(message._socketId, "error", { message: `Order creation failed: ${error}` });
         }
-    });
+    };
+
+    on("createOrder", handleOrderCreation);
+    on("makeRaddiOrder", handleOrderCreation);
+    on("create_order", handleOrderCreation);
+
 
     // ── Place Bid ─────────────────────────────────────────────
     /**
@@ -214,15 +218,20 @@ export const setupRidesController = () => {
      */
     on("placeBid", async (message: any) => {
         try {
-            const data = message.data;
+            const data = message.data || {};
             const socketId = message._socketId;
             const ws = message._ws;
 
-            if (!data?.orderId || !data.collectorId || !data.bidAmount || data.bidAmount <= 0) {
-                return sendToSocket(socketId, "error", { message: "Missing or invalid bid fields" });
+            const orderId = Number(data.orderId || data.order_id);
+            const collectorId = Number(data.collectorId || data.userId || data.collector_id || data.user_id);
+            const bidAmount = Number(data.bidAmount || data.amount || data.bid_amount || data.price);
+            const note = data.note ? String(data.note) : null;
+
+            if (!orderId || !collectorId || !bidAmount || isNaN(bidAmount) || bidAmount <= 0) {
+                return sendToSocket(socketId, "error", { message: "Missing or invalid bid fields: orderId, collectorId, and bidAmount required" });
             }
 
-            const order = await getOrder(data.orderId);
+            const order = await getOrder(orderId);
             if (!order) {
                 return sendToSocket(socketId, "error", { message: "Order not found" });
             }
@@ -231,6 +240,7 @@ export const setupRidesController = () => {
                     message: `Cannot bid on order with status: ${order.status}`
                 });
             }
+
 
             // Join collector's room for counter-bid notifications
             if (ws) {
@@ -314,14 +324,17 @@ export const setupRidesController = () => {
      */
     on("acceptBid", async (message: any) => {
         try {
-            const data = message.data;
+            const data = message.data || {};
             const socketId = message._socketId;
 
-            if (!data?.orderId || !data.bidId) {
+            const orderId = Number(data.orderId || data.order_id);
+            const bidId = Number(data.bidId || data.bid_id);
+
+            if (!orderId || !bidId) {
                 return sendToSocket(socketId, "error", { message: "orderId and bidId required" });
             }
 
-            const order = await getOrder(data.orderId);
+            const order = await getOrder(orderId);
             if (!order) return sendToSocket(socketId, "error", { message: "Order not found" });
             if (!['pending', 'bidding'].includes(order.status)) {
                 return sendToSocket(socketId, "error", {
@@ -332,7 +345,7 @@ export const setupRidesController = () => {
             // Fetch the target bid
             const [bidRows] = await pool.query<RowDataPacket[]>(
                 `SELECT * FROM order_bids WHERE id = ? AND order_id = ?`,
-                [data.bidId, data.orderId]
+                [bidId, orderId]
             );
             const bid = (bidRows as any)[0];
             if (!bid) return sendToSocket(socketId, "error", { message: "Bid not found" });
@@ -346,24 +359,24 @@ export const setupRidesController = () => {
             // Accept this bid, reject all others on this order
             await pool.execute(
                 `UPDATE order_bids SET status = 'accepted' WHERE id = ?`,
-                [data.bidId]
+                [bidId]
             );
             await pool.execute(
                 `UPDATE order_bids SET status = 'rejected' 
                  WHERE order_id = ? AND id != ? AND status IN ('pending', 'countered')`,
-                [data.orderId, data.bidId]
+                [orderId, bidId]
             );
 
             // Update order
             await pool.execute(
                 `UPDATE orders SET status = 'accepted', collectorId = ?, finalPrice = ? WHERE id = ?`,
-                [collectorId, finalPrice, data.orderId]
+                [collectorId, finalPrice, orderId]
             );
 
             // WS + Push to accepted collector
             const acceptedPayload = {
-                orderId: data.orderId,
-                bidId: data.bidId,
+                orderId,
+                bidId,
                 finalPrice,
                 message: 'Your bid was accepted! Head to the pickup location.',
                 order: {
@@ -374,28 +387,29 @@ export const setupRidesController = () => {
                 }
             };
             sendToRoom(String(collectorId), "bidAccepted", acceptedPayload);
-            sendPushToUser(collectorId, PushNotifications.bidAccepted(data.orderId, finalPrice)).catch(() => {});
+            sendPushToUser(collectorId, PushNotifications.bidAccepted(orderId, finalPrice)).catch(() => {});
 
             // Notify other collectors their bids were rejected
-            await notifyOrderResolved(data.orderId, "bidRejected", {
-                orderId: data.orderId,
+            await notifyOrderResolved(orderId, "bidRejected", {
+                orderId,
                 message: 'Another bid was accepted for this order.',
                 except: collectorId,
             });
 
             sendToSocket(socketId, "bidAcceptConfirmed", {
                 success: true,
-                orderId: data.orderId,
+                orderId,
                 collectorId,
                 finalPrice,
             });
 
-            console.log(`[Order #${data.orderId}] Bid #${data.bidId} accepted — PKR ${finalPrice} — Collector #${collectorId}`);
+            console.log(`[Order #${orderId}] Bid #${bidId} accepted — PKR ${finalPrice} — Collector #${collectorId}`);
         } catch (error) {
             console.error("[acceptBid] Error:", error);
             sendToSocket(message._socketId, "error", { message: `Accept bid failed: ${error}` });
         }
     });
+
 
     // ── Reject Bid ────────────────────────────────────────────
     /**
