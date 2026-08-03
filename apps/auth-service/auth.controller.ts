@@ -243,23 +243,34 @@ const getMe = async (req: Request): Promise<Response> => {
 const deleteMe = async (req: Request): Promise<Response> => {
     try {
         const user = (req as any).user;
-        if (!user) {
-            return Response.json({ message: 'Unauthorized' }, { status: 401 });
+        if (!user || !user.userId) return Response.json({ message: 'Unauthorized' }, { status: 401 });
+
+        const userId = Number(user.userId);
+
+        const connection = await pool.getConnection();
+        try {
+            await connection.query('SET FOREIGN_KEY_CHECKS = 0');
+            await connection.query('DELETE FROM chats WHERE sender_id = ? OR receiver_id = ?', [userId, userId]);
+            await connection.query('DELETE FROM order_bids WHERE collector_id = ?', [userId]);
+            await connection.query('DELETE FROM wallet_transactions WHERE user_id = ?', [userId]);
+            await connection.query('DELETE FROM wallets WHERE user_id = ?', [userId]);
+            await connection.query('DELETE FROM orders WHERE customerId = ? OR collectorId = ?', [userId, userId]);
+            await connection.query('DELETE FROM users WHERE id = ?', [userId]);
+            await connection.query('SET FOREIGN_KEY_CHECKS = 1');
+        } finally {
+            connection.release();
         }
 
-        await pool.execute(
-            "DELETE FROM users WHERE id = ?",
-            [user.userId]
-        );
-
-        await redis.del(`user:${user.userId}`);
-        return Response.json({ message: 'User deleted successfully' }, { status: 200 });
+        await redis.del(`user:${userId}`);
+        console.log(`✓ User #${userId} and associated data deleted successfully.`);
+        return Response.json({ message: 'User account deleted successfully' }, { status: 200 });
     } catch (error) {
         console.error('deleteMe error:', error);
         const errorMessage = error instanceof Error ? error.message : String(error);
         return Response.json({ message: 'Failed to delete user', error: errorMessage }, { status: 500 });
     }
 }
+
 
 const resetPassword = async (req: Request): Promise<Response> => {
     try {

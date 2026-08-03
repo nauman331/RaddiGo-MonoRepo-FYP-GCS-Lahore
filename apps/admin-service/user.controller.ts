@@ -94,18 +94,32 @@ export const adminDeleteUser = async (req: Request): Promise<Response> => {
     const res = await requireAdmin(req); if (res) return res;
     
     const url = new URL(req.url);
-    const userId = url.searchParams.get('id');
-    if (!userId) return Response.json({ message: 'User ID required' }, { status: 400 });
+    const userIdStr = url.searchParams.get('id');
+    if (!userIdStr) return Response.json({ message: 'User ID required' }, { status: 400 });
+
+    const userId = Number(userIdStr);
 
     try {
-        await pool.execute(`DELETE FROM users WHERE id = ?`, [userId]);
+        const connection = await pool.getConnection();
+        try {
+            await connection.query('SET FOREIGN_KEY_CHECKS = 0');
+            await connection.query('DELETE FROM chats WHERE sender_id = ? OR receiver_id = ?', [userId, userId]);
+            await connection.query('DELETE FROM order_bids WHERE collector_id = ?', [userId]);
+            await connection.query('DELETE FROM wallet_transactions WHERE user_id = ?', [userId]);
+            await connection.query('DELETE FROM wallets WHERE user_id = ?', [userId]);
+            await connection.query('DELETE FROM orders WHERE customerId = ? OR collectorId = ?', [userId, userId]);
+            await connection.query('DELETE FROM users WHERE id = ?', [userId]);
+            await connection.query('SET FOREIGN_KEY_CHECKS = 1');
+        } finally {
+            connection.release();
+        }
+
         await redis.del(`user:${userId}`);
+        console.log(`✓ Admin deleted user #${userId} and associated records.`);
         return Response.json({ message: 'User deleted successfully' }, { status: 200 });
     } catch (err: any) {
         console.error('Error deleting user:', err);
-        if (err.code === 'ER_ROW_IS_REFERENCED_2') {
-            return Response.json({ message: 'Cannot delete user because they have existing records (orders, wallets).' }, { status: 400 });
-        }
-        return Response.json({ message: 'Failed to delete user' }, { status: 500 });
+        return Response.json({ message: 'Failed to delete user', error: err.message }, { status: 500 });
     }
 };
+

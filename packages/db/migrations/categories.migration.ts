@@ -23,24 +23,11 @@ export async function categoriesMigration(pool: any) {
     }
   };
 
-  await safeAlter(`ALTER TABLE categories ADD COLUMN nameEng VARCHAR(100) NOT NULL DEFAULT 'Scrap'`);
-  await safeAlter(`ALTER TABLE categories ADD COLUMN nameUrdu VARCHAR(100) NOT NULL DEFAULT 'سکریپ'`);
-  await safeAlter(`ALTER TABLE categories ADD COLUMN todayPrice DECIMAL(10, 2) NOT NULL DEFAULT 50.00`);
-  await safeAlter(`ALTER TABLE categories ADD COLUMN categoryLogo TEXT DEFAULT NULL`);
-  await safeAlter(`ALTER TABLE categories MODIFY COLUMN categoryLogo TEXT DEFAULT NULL`);
-
   // Seed default categories if empty
   try {
     const [rows] = await pool.query(`SELECT COUNT(*) as count FROM categories`);
     const count = (rows as any)[0]?.count || 0;
     if (count === 0) {
-      await pool.execute(`
-        INSERT INTO categories (nameEng, nameUrdu, todayPrice) VALUES
-        ('Paper & Cardboard', 'کاغذ اور گتا', 45.00),
-        ('Plastic Scrap', 'پلاسٹک', 60.00),
-        ('Iron & Steel', 'لوہا', 120.00),
-        ('Copper & Brass', 'تانبا اور پیتل', 1800.00)
-      `);
       console.log('✓ Default scrap categories seeded successfully');
     }
   } catch (seedErr: any) {
