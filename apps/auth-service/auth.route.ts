@@ -60,6 +60,12 @@ export const AuthRoutes = {
     '/auth/api/v1/reset-password': {
         POST: async (req: Request) => await AuthController.resetPassword(req),
     },
+    '/auth/api/v1/google': {
+        POST: async (req: Request) => await AuthController.doGoogleLogin(req),
+    },
+    '/auth/api/v1/google-login': {
+        POST: async (req: Request) => await AuthController.doGoogleLogin(req),
+    },
 
     '/auth/api/v1/admin-login': {
         POST: async (req: Request) => await AuthController.adminLogin(req),

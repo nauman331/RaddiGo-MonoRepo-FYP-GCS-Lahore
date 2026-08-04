@@ -385,8 +385,88 @@ const updateProfile = async (req: Request): Promise<Response> => {
 
 const doGoogleLogin = async (req: Request): Promise<Response> => {
     try {
-        return Response.json({ message: 'Google login not implemented yet' }, { status: 501 });
+        const body = await safeParseJSON<{
+            email: string;
+            username?: string;
+            name?: string;
+            googleId?: string;
+            profilePicture?: string;
+            role?: "customer" | "collector";
+            idToken?: string;
+        }>(req);
+
+        if (!body || !body.email) {
+            return Response.json({ message: 'Email is required for Google login' }, { status: 400 });
+        }
+
+        const email = body.email.toLowerCase().trim();
+        const googleId = body.googleId || null;
+        const profilePicture = body.profilePicture || null;
+        const username = body.username || body.name || email.split('@')[0] || 'Google User';
+        const role = body.role === 'collector' ? 'collector' : 'customer';
+
+        // Check if user exists by email or googleId
+        const [existingUserRows] = await pool.query<RowDataPacket[]>(
+            "SELECT * FROM users WHERE email = ? OR (googleId IS NOT NULL AND googleId = ?)",
+            [email, googleId || '']
+        );
+        let user = (existingUserRows as unknown as IUser[])[0];
+
+        if (user) {
+            if (!user.isActive) {
+                return Response.json({ message: 'Account has been deactivated. Contact support.' }, { status: 403 });
+            }
+
+            // Ensure user is marked verified & update googleId / profilePicture if missing
+            await pool.execute(
+                "UPDATE users SET isVerified = true, googleId = COALESCE(googleId, ?), profilePicture = COALESCE(profilePicture, ?) WHERE id = ?",
+                [googleId, profilePicture, user.id]
+            );
+            await redis.del(`user:${user.id}`);
+        } else {
+            // Register new user authenticated via Google
+            const dummyPassword = await Bun.password.hash(`GOOGLE_AUTH_${Date.now()}_${Math.random()}`, "bcrypt");
+            const dummyPhone = `+92${Math.floor(3000000000 + Math.random() * 900000000)}`;
+
+            await pool.execute(
+                "INSERT INTO users (username, email, password, phone, role, googleId, profilePicture, isVerified) VALUES (?, ?, ?, ?, ?, ?, ?, true)",
+                [username, email, dummyPassword, dummyPhone, role, googleId, profilePicture]
+            );
+
+            const [newUserRows] = await pool.query<RowDataPacket[]>(
+                "SELECT * FROM users WHERE email = ?",
+                [email]
+            );
+            user = (newUserRows as unknown as IUser[])[0];
+
+            if (user) {
+                await pool.execute("INSERT INTO wallets (user_id) VALUES (?)", [user.id]);
+            }
+        }
+
+        if (!user) {
+            return Response.json({ message: 'Failed to process Google login' }, { status: 500 });
+        }
+
+        const token = signToken(user.id.toString());
+        return Response.json({
+            token,
+            userId: user.id,
+            role: user.role,
+            isOk: true,
+            user: {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                phone: user.phone,
+                role: user.role,
+                profilePicture: user.profilePicture,
+                isVerified: true
+            },
+            message: 'Google login successful'
+        }, { status: 200 });
     } catch (error) {
+        console.error('Google login error:', error);
         const errorMessage = error instanceof Error ? error.message : String(error);
         return Response.json({ message: 'Google login failed', error: errorMessage }, { status: 500 });
     }
