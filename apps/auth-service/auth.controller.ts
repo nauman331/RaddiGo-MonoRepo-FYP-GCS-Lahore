@@ -27,9 +27,9 @@ const register = async (req: Request): Promise<Response> => {
         if (!username || !password || !email || !phone) {
             return Response.json({ message: 'Missing required fields' }, { status: 400 });
         }
-if (!["customer", "collector"].includes(role)) {
-    return Response.json({ message: 'Role is not Correct' }, { status: 401 });
-}
+        if (!["customer", "collector"].includes(role)) {
+            return Response.json({ message: 'Role is not Correct' }, { status: 401 });
+        }
 
         const [existingEmailRows] = await pool.query<RowDataPacket[]>(
             "SELECT * FROM users WHERE email = ?",
@@ -51,21 +51,21 @@ if (!["customer", "collector"].includes(role)) {
 
         const hashedPassword = await Bun.password.hash(password, "bcrypt");
         const otp = generateOTP();
-        const otpExpiry = new Date(Date.now() + 15 * 60000); 
+        const otpExpiry = new Date(Date.now() + 15 * 60000);
 
         await sendPasswordResetEmail(email, otp);
 
-await pool.execute(
-    "INSERT INTO users (username, email, password, phone, role, isVerified, otp, otpExpiry) VALUES (?, ?, ?, ?, ?, false, ?, ?)",
-    [username, email, hashedPassword, phone, role, otp, otpExpiry]
-);
-const [newUser] = await pool.query<RowDataPacket[]>(
-  "SELECT id FROM users WHERE email = ?",
-  [email]
-);
-const userId = (newUser[0] as any).id;
+        await pool.execute(
+            "INSERT INTO users (username, email, password, phone, role, isVerified, otp, otpExpiry) VALUES (?, ?, ?, ?, ?, false, ?, ?)",
+            [username, email, hashedPassword, phone, role, otp, otpExpiry]
+        );
+        const [newUser] = await pool.query<RowDataPacket[]>(
+            "SELECT id FROM users WHERE email = ?",
+            [email]
+        );
+        const userId = (newUser[0] as any).id;
 
-await pool.execute("INSERT INTO wallets (user_id) VALUES (?)", [userId]);
+        await pool.execute("INSERT INTO wallets (user_id) VALUES (?)", [userId]);
 
         return Response.json({ message: 'Register successful. Please check your email for OTP' }, { status: 200 });
     } catch (error) {
@@ -145,7 +145,7 @@ const login = async (req: Request): Promise<Response> => {
             return Response.json({ message: 'Account has been deactivated. Contact support.' }, { status: 403 });
         }
 
-        const isPasswordValid = user2 ? await Bun.password.verify(password, user2.password, "bcrypt") : false;
+        const isPasswordValid = user2 ? await Bun.password.verify(password, user2.password!, "bcrypt") : false;
         if (!isPasswordValid) {
             return Response.json({ message: 'Invalid password' }, { status: 401 });
         }
@@ -486,7 +486,7 @@ const adminLogin = async (req: Request): Promise<Response> => {
         if (!user) return Response.json({ message: 'Email not registered' }, { status: 401 });
         if (user.role !== 'admin') return Response.json({ message: 'Access denied: Admin only' }, { status: 403 });
 
-        const isValid = await Bun.password.verify(password, user.password, "bcrypt");
+        const isValid = await Bun.password.verify(password, user.password!, "bcrypt");
         if (!isValid) return Response.json({ message: 'Invalid password' }, { status: 401 });
 
         if (!user.isVerified) return Response.json({ message: 'Email not verified' }, { status: 403 });
